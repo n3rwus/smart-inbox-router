@@ -1,0 +1,53 @@
+
+name: smart-inbox-router
+
+services:
+  ollama:
+    image: ollama/ollama:0.40.15
+    volumes:
+      - ollama-models:/root/.ollama
+    networks: [llm-net, egress]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+    # No published ports: Ollama has no authentication, so it must not be exposed to the host.
+
+  ollama-init:
+    image: ollama/ollama:0.40.15
+    environment:
+      OLLAMA_HOST: ollama:11434
+    entrypoint: ["ollama", "pull", "${LLM__MODEL:-qwen2.5:3b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks: [llm-net]
+    restart: "no"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    platform: linux/amd64
+    # No ARM image is available; Apple Silicon runs this image through emulation.
+    ports:
+      - "8025:8025"
+    # Only the web UI is exposed; SMTP port 1025 is accessible only within the Compose network.
+    networks: [mail-net, edge]
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
+
+networks:
+  edge: {}
+  # Network for services exposing ports to the host.
+  egress: {}
+  # Network providing outbound internet access.
+  llm-net:
+    internal: true
+  # Isolated network for LLM services.
+  mail-net:
+    internal: true
+  # Isolated network for mail services.

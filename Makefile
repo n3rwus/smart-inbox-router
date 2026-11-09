@@ -26,7 +26,7 @@ ps:    ; docker compose ps
 logs:  ; docker compose logs -f
 clean: ; docker compose down -v
 
-# --- Obrazy ---
+# --- Images ---
 images:
 	docker build --build-arg SERVICE=router   -t sir/router:dev .
 	docker build --build-arg SERVICE=notifier -t sir/notifier:dev .
@@ -37,7 +37,7 @@ image-check: images
 	@test "$$(docker run --rm sir/router:dev id -u)" = "10001" && echo "user ok"
 	@docker run --rm sir/notifier:dev agent >/dev/null 2>&1; test $$? -eq 64 && echo "entrypoint ok"
 
-# --- Bezpieczeństwo ---
+# --- Security ---
 security: sec-secrets sec-deps sec-config sec-images
 
 sec-secrets:

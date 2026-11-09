@@ -28,6 +28,20 @@ async def test_same_message_is_not_sent_twice(sender, log):
     assert len(sender.sent) == 1
 
 
+async def test_logs_only_safe_fields(sender, log, caplog):
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="notifier.application.deliver"):
+        await deliver(NOTIFICATION, sender=sender, log=log, from_address="router@test.local")
+
+    [record] = caplog.records
+    assert record.message_id == "msg-1"
+    assert record.department == "it"
+    assert record.outcome == "sent"
+    assert "Laptop" not in record.getMessage()
+    assert "jan.kowalski" not in record.getMessage()
+
+
 async def test_failed_delivery_is_not_marked_so_it_can_be_retried(sender, log):
     sender.fail = True
 

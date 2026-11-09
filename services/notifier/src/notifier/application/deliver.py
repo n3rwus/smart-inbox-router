@@ -1,3 +1,5 @@
+import logging
+import time
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -7,6 +9,8 @@ from pydantic import EmailStr
 from notifier.domain.email import build_email
 from notifier.ports.delivery_log import DeliveryLog
 from notifier.ports.email_sender import EmailSender
+
+_log = logging.getLogger(__name__)
 
 
 class DeliveryOutcome(StrEnum):
@@ -29,7 +33,14 @@ async def deliver(
     log: DeliveryLog,
     from_address: EmailStr,
 ) -> DeliveryOutcome:
+    started = time.monotonic()
+    extra = {"message_id": notification.message_id, "department": notification.department.value}
+
     if await log.is_delivered(notification.message_id):
+        _log.info(
+            "delivery skipped",
+            extra={**extra, "outcome": DeliveryOutcome.ALREADY_SENT.value, "duration_ms": 0},
+        )
         return DeliveryOutcome.ALREADY_SENT
 
     email = build_email(
@@ -40,4 +51,13 @@ async def deliver(
     )
     await sender.send(email)
     await log.mark_delivered(notification.message_id)
+
+    _log.info(
+        "delivery completed",
+        extra={
+            **extra,
+            "outcome": DeliveryOutcome.SENT.value,
+            "duration_ms": round((time.monotonic() - started) * 1000, 2),
+        },
+    )
     return DeliveryOutcome.SENT

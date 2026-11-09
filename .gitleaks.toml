@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Demo values for local development, documented in the README; these are not real secrets."
+paths = ['''^secrets/.*\.txt$''']

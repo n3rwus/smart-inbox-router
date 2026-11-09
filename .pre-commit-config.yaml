@@ -17,6 +17,24 @@ repos:
         stages: [pre-commit]
       - id: detect-private-key
 
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks-docker
+        stages: [pre-commit]
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.15.1
+    hooks:
+      - id: hadolint-docker
+        stages: [pre-commit]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1-1
+    hooks:
+      - id: shellcheck
+        stages: [pre-commit]
+
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.13.7
     hooks:

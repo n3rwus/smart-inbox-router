@@ -1,0 +1,66 @@
+[tool.uv.workspace]
+members = ["libs/common", "services/router", "services/notifier"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "respx",
+    "aiosmtpd",
+    "ruff",
+    "mypy",
+    "import-linter",
+    "pyyaml",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "S", "SIM", "RUF"]
+per-file-ignores = { "**/tests/**" = ["S101"] }
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["libs/common/src", "services/router/src", "services/notifier/src"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "libs/common/tests",
+    "services/router/tests",
+    "services/notifier/tests",
+    "tests",
+]
+asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
+
+[tool.importlinter]
+root_packages = ["router", "notifier", "common"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Router core must not depend on infrastructure"
+type = "forbidden"
+source_modules = ["router.domain", "router.application"]
+forbidden_modules = [
+    "router.adapters",
+    "fastapi",
+    "sqlalchemy",
+    "pydantic_ai",
+    "httpx",
+]
+
+[[tool.importlinter.contracts]]
+name = "Notifier core must not depend on infrastructure"
+type = "forbidden"
+source_modules = ["notifier.domain"]
+forbidden_modules = [
+    "notifier.adapters",
+    "fastapi",
+    "sqlalchemy",
+    "aiosmtplib",
+    "mcp",
+]

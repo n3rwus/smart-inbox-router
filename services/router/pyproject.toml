@@ -1,0 +1,29 @@
+[project]
+name = "router"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "n3rwus", email = "mnerwinski@outlook.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.1",
+    "cachetools>=8.0.0",
+    "common",
+    "fastapi>=0.162.2",
+    "jinja2>=3.1.6",
+    "pydantic-ai-slim[openai]>=2.66.0",
+    "pydantic[email]>=2.14.3",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+router = "router:main"
+
+[build-system]
+requires = ["uv_build>=0.9.14,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+common = { workspace = true }

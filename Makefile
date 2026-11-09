@@ -7,7 +7,8 @@ TRIVY_FLAGS = --severity HIGH,CRITICAL --exit-code 1 --skip-version-check
 .PHONY: sync lint fmt test check hooks smoke \
 	up down ps logs clean \
 	images image-check \
-	security sec-secrets sec-deps sec-config sec-images
+	security sec-secrets sec-deps sec-config sec-images \
+	gpu gpu-docker gpu-watch
 
 # --- Python ---
 sync:  ; uv sync --all-packages
@@ -55,3 +56,8 @@ sec-images: images
 	docker save sir/notifier:dev -o .trivy/notifier.tar
 	$(TRIVY) image --input .trivy/router.tar   $(TRIVY_FLAGS) --ignore-unfixed
 	$(TRIVY) image --input .trivy/notifier.tar $(TRIVY_FLAGS) --ignore-unfixed
+
+# --- GPU ---
+gpu:        ; nvidia-smi
+gpu-docker: ; docker run --rm --gpus all ubuntu:24.04 nvidia-smi
+gpu-watch:  ; watch -n 1 nvidia-smi

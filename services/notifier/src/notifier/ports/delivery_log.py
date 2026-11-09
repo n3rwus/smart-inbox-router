@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class DeliveryLog(Protocol):
+    async def is_delivered(self, message_id: str) -> bool: ...
+    async def mark_delivered(self, message_id: str) -> None: ...

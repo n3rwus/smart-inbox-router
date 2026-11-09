@@ -35,7 +35,23 @@ testpaths = [
     "tests",
 ]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 addopts = "--import-mode=importlib"
+
+[tool.coverage.run]
+source = ["common", "router", "notifier"]
+branch = true                                   
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_empty = true
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "class .*\\bProtocol\\):",                       
+  "@(abc\\.)?abstractmethod",
+]
 
 [tool.importlinter]
 root_packages = ["router", "notifier", "common"]

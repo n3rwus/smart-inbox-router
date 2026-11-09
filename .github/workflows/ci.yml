@@ -41,7 +41,7 @@ jobs:
       - name: Tests (without Ollama or Docker)
         env:
           LLM__PROVIDER: test
-        run: uv run pytest --cov=router --cov=notifier --cov=common --cov-report=term-missing --cov-fail-under=80
+        run: uv run pytest --cov
 
   migrations:
     runs-on: ubuntu-latest

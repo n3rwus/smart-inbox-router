@@ -12,6 +12,7 @@ dev = [
     "mypy",
     "import-linter",
     "pyyaml",
+    "pre-commit",
 ]
 
 [tool.ruff]
@@ -40,7 +41,7 @@ addopts = "--import-mode=importlib"
 
 [tool.coverage.run]
 source = ["common", "router", "notifier"]
-branch = true                                   
+branch = true
 
 [tool.coverage.report]
 fail_under = 80
@@ -49,7 +50,7 @@ skip_empty = true
 exclude_also = [
   "if TYPE_CHECKING:",
   "raise NotImplementedError",
-  "class .*\\bProtocol\\):",                       
+  "class .*\\bProtocol\\):",
   "@(abc\\.)?abstractmethod",
 ]
 

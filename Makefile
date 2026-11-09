@@ -4,3 +4,5 @@ fmt:   ; uv run ruff format . && uv run ruff check --fix .
 test:  ; uv run pytest --cov=router --cov=notifier --cov=common --cov-fail-under=80
 up:    ; docker compose up -d
 smoke: ; ./scripts/smoke_test.sh
+hooks: ; uv run pre-commit install
+check: ; uv run pre-commit run --all-files

@@ -6,12 +6,21 @@ SENDER = "jan.kowalski@firma.pl"
 
 
 def _build(**overrides):
-    kwargs = {"department": Department.IT, "sender": SENDER, "message": "Laptop nie działa"}
+    kwargs = {
+        "department": Department.IT,
+        "sender": SENDER,
+        "message": "Laptop nie działa",
+        "from_address": "router@test.local",
+    }
     return build_email(**(kwargs | overrides))
 
 
 def test_to_is_resolved_from_department():
     assert _build()["To"] == "it@example.com"
+
+
+def test_from_is_configurable():
+    assert _build()["From"] == "router@test.local"
 
 
 def test_reply_to_is_original_sender():

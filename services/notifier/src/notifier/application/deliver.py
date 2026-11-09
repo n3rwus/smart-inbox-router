@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from common.departments import Department
+from pydantic import EmailStr
 
 from notifier.domain.email import build_email
 from notifier.ports.delivery_log import DeliveryLog
@@ -17,12 +18,16 @@ class DeliveryOutcome(StrEnum):
 class Notification:
     message_id: str
     department: Department
-    sender: str
+    sender: EmailStr
     message: str
 
 
 async def deliver(
-    notification: Notification, *, sender: EmailSender, log: DeliveryLog
+    notification: Notification,
+    *,
+    sender: EmailSender,
+    log: DeliveryLog,
+    from_address: EmailStr,
 ) -> DeliveryOutcome:
     if await log.is_delivered(notification.message_id):
         return DeliveryOutcome.ALREADY_SENT
@@ -31,6 +36,7 @@ async def deliver(
         department=notification.department,
         sender=notification.sender,
         message=notification.message,
+        from_address=from_address,
     )
     await sender.send(email)
     await log.mark_delivered(notification.message_id)

@@ -1,15 +1,20 @@
 from email.message import EmailMessage
 
 from common.departments import Department
+from pydantic import EmailStr
 
 from notifier.domain.recipients import recipient_for
 
-FROM_ADDRESS = "smart-inbox-router@example.com"
 
-
-def build_email(*, department: Department, sender: str, message: str) -> EmailMessage:
+def build_email(
+    *,
+    department: Department,
+    sender: EmailStr,
+    message: str,
+    from_address: EmailStr,
+) -> EmailMessage:
     email = EmailMessage()
-    email["From"] = FROM_ADDRESS
+    email["From"] = from_address
     email["To"] = recipient_for(department)
     email["Reply-To"] = sender
     email["Subject"] = f"[smart-inbox-router] New request for {department}"

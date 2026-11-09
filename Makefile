@@ -2,7 +2,7 @@ TRIVY_VERSION    ?= 0.67.0
 GITLEAKS_VERSION ?= v8.28.0
 TRIVY = docker run --rm -v "$(CURDIR):/src" -v trivy-cache:/root/.cache/trivy -w /src \
         aquasec/trivy:$(TRIVY_VERSION)
-TRIVY_FLAGS = --severity HIGH,CRITICAL --exit-code 1
+TRIVY_FLAGS = --severity HIGH,CRITICAL --exit-code 1 --skip-version-check
 
 .PHONY: security sec-deps sec-config sec-secrets sec-images images
 

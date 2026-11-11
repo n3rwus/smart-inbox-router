@@ -10,3 +10,41 @@
   "request_id": "a1b2c3"
 }
 ```
+
+- Jeśli wysyłka się uda, a zapis w logu nie, ponowna próba wyśle maila drugi raz. Wyścig przy sprawdzaniu i zapisie
+
+### Decision: notifier as a separate service over HTTP
+
+The notifier runs as its own container and owns email delivery: recipient
+allowlist, `Reply-To`, idempotency. The router calls it via
+`POST /api/v1/notifications` through a `Notifier` port, so the transport can
+change without touching the agent.
+
+**Security invariant:** the agent's tool `send_to_department(department)`
+takes only the department enum from the LLM. Message id, sender address and
+body are attached by router code, never by the model, so prompt injection in
+a message cannot change recipients or `Reply-To`.
+
+**Trade-off:** an extra container and an HTTP client with timeouts, in exchange
+for independent deployment and a real service boundary. The notifier is
+internal only (no published port). An MCP interface was considered and skipped
+as unnecessary for this PoC.
+
+### Notifier SMTP config
+
+SMTP connection comes from nested env vars (`NOTIFIER_SMTP__*`). Against the
+default MailHog target `NOTIFIER_SMTP__START_TLS=false`, because MailHog does
+not support TLS. Point the same variables at a real SMTP server and flip
+`START_TLS` to `true`; no code change needed.
+
+### Running integration tests
+
+Integration tests are deselected from the default `make test` run via the
+`integration` pytest marker. To run them against a live MailHog:
+
+```bash
+docker compose up -d mailhog
+make test-integration
+```
+
+They read MailHog coordinates from `MAILHOG_*` env vars (see `.env.example`).

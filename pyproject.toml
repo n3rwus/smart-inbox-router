@@ -37,7 +37,10 @@ testpaths = [
 ]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "--import-mode=importlib"
+addopts = "--import-mode=importlib -m 'not integration'"
+markers = [
+    "integration: tests that require running infrastructure (docker compose)",
+]
 
 [tool.coverage.run]
 source = ["common", "router", "notifier"]

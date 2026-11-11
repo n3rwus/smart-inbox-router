@@ -4,7 +4,7 @@ TRIVY = docker run --rm -v "$(CURDIR):/src" -v trivy-cache:/root/.cache/trivy -w
 	aquasec/trivy:$(TRIVY_VERSION)
 TRIVY_FLAGS = --severity HIGH,CRITICAL --exit-code 1 --skip-version-check
 
-.PHONY: sync lint fmt test check hooks smoke \
+.PHONY: sync lint fmt test test-integration check hooks smoke \
 	up down ps logs clean \
 	images image-check \
 	security sec-secrets sec-deps sec-config sec-images \
@@ -15,6 +15,7 @@ sync:  ; uv sync --all-packages
 lint:  ; uv run ruff format --check . && uv run ruff check . && uv run mypy && uv run lint-imports
 fmt:   ; uv run ruff format . && uv run ruff check --fix .
 test:  ; uv run pytest --cov
+test-integration: ; uv run pytest -m integration --no-cov
 check: ; uv run pre-commit run --all-files
 hooks: ; uv run pre-commit install
 smoke: ; ./scripts/smoke_test.sh

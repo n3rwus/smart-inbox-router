@@ -461,7 +461,9 @@ name = "common"
 version = "0.1.0"
 source = { editable = "libs/common" }
 dependencies = [
+    { name = "aiosmtplib" },
     { name = "aiosqlite" },
+    { name = "fastapi" },
     { name = "httpx" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-instrumentation-fastapi" },
@@ -474,7 +476,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiosmtplib", specifier = ">=5.1.3" },
     { name = "aiosqlite", specifier = ">=0.22.1" },
+    { name = "fastapi", specifier = ">=0.162.2" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.45.2" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.66b2" },

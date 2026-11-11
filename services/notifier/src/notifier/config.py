@@ -1,5 +1,6 @@
 from common.settings import BaseServiceSettings
-from pydantic import EmailStr
+from common.smtp import SmtpConfig
+from pydantic import EmailStr, Field
 from pydantic_settings import SettingsConfigDict
 
 
@@ -9,8 +10,8 @@ class NotifierSettings(BaseServiceSettings):
         extra="ignore",
         frozen=True,
         env_prefix="NOTIFIER_",
+        env_nested_delimiter="__",
     )
 
-    smtp_host: str = "mailhog"
-    smtp_port: int = 1025
+    smtp: SmtpConfig = Field(default_factory=SmtpConfig)
     from_address: EmailStr = "smart-inbox-router@example.com"

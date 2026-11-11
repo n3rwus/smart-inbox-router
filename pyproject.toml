@@ -81,3 +81,20 @@ forbidden_modules = [
     "aiosmtplib",
     "mcp",
 ]
+
+[[tool.importlinter.contracts]]
+name = "Common domain modules must not depend on HTTP or SMTP adapters"
+type = "forbidden"
+source_modules = [
+    "common.departments",
+    "common.email_headers",
+    "common.errors",
+    "common.settings",
+    "common.timeouts",
+]
+forbidden_modules = [
+    "common.http",
+    "common.smtp",
+    "fastapi",
+    "aiosmtplib",
+]

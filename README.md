@@ -40,11 +40,13 @@ not support TLS. Point the same variables at a real SMTP server and flip
 ### Running integration tests
 
 Integration tests are deselected from the default `make test` run via the
-`integration` pytest marker. To run them against a live MailHog:
+`integration` pytest marker. They run as a container joined to the
+`mail-net` network so MailHog's SMTP port stays unpublished to the host:
 
 ```bash
 docker compose up -d mailhog
 make test-integration
 ```
 
-They read MailHog coordinates from `MAILHOG_*` env vars (see `.env.example`).
+The `integration-tests` service in `docker-compose.test.yml` injects
+`MAILHOG_*` env vars that point at the `mailhog` service by name.

@@ -15,7 +15,9 @@ sync:  ; uv sync --all-packages
 lint:  ; uv run ruff format --check . && uv run ruff check . && uv run mypy && uv run lint-imports
 fmt:   ; uv run ruff format . && uv run ruff check --fix .
 test:  ; uv run pytest --cov
-test-integration: ; uv run pytest -m integration --no-cov
+test-integration:
+	docker compose -f docker-compose.yml -f docker-compose.test.yml \
+		run --rm integration-tests
 check: ; uv run pre-commit run --all-files
 hooks: ; uv run pre-commit install
 smoke: ; ./scripts/smoke_test.sh

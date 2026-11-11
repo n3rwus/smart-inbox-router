@@ -1,0 +1,20 @@
+services:
+  integration-tests:
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    working_dir: /src
+    volumes:
+      - .:/src
+      - integration-uv-cache:/root/.cache/uv
+      - integration-venv:/src/.venv
+    environment:
+      MAILHOG_API_URL: http://mailhog:8025/api
+      MAILHOG_SMTP_HOST: mailhog
+      MAILHOG_SMTP_PORT: "1025"
+    entrypoint: ["uv"]
+    command: ["run", "pytest", "-m", "integration", "--no-cov"]
+    networks: [mail-net, egress]
+    depends_on: [mailhog]
+
+volumes:
+  integration-uv-cache:
+  integration-venv:

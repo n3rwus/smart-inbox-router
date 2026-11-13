@@ -1,15 +1,14 @@
-from collections.abc import Awaitable, Callable
-from typing import Annotated
+from typing import Annotated, cast
 
 from common.departments import Department
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, EmailStr, field_validator
 
-from notifier.application.deliver import DeliveryOutcome, Notification
+from notifier.application.deliver import Deliver, Notification
 
 NOTIFICATIONS_PATH = "/notifications"
 
-DeliverHandler = Callable[[Notification], Awaitable[DeliveryOutcome]]
+DeliverHandler = Deliver
 
 
 class NotificationRequest(BaseModel):
@@ -34,8 +33,8 @@ class NotificationRequest(BaseModel):
         )
 
 
-def get_deliver() -> DeliverHandler:
-    raise NotImplementedError("overridden in the composition root")
+def get_deliver(request: Request) -> Deliver:
+    return cast(Deliver, request.app.state.deliver)
 
 
 router = APIRouter(tags=["notifications"])
@@ -51,6 +50,6 @@ router = APIRouter(tags=["notifications"])
 )
 async def create_notification(
     payload: NotificationRequest,
-    deliver_fn: Annotated[DeliverHandler, Depends(get_deliver)],
+    deliver_fn: Annotated[Deliver, Depends(get_deliver)],
 ) -> None:
     await deliver_fn(payload.to_notification())

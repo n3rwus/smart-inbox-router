@@ -2,6 +2,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Protocol
 
 from common.departments import Department
 from pydantic import EmailStr
@@ -24,6 +25,10 @@ class Notification:
     department: Department
     sender: EmailStr
     message: str
+
+
+class Deliver(Protocol):
+    async def __call__(self, notification: Notification) -> DeliveryOutcome: ...
 
 
 async def deliver(

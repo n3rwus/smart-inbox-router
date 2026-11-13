@@ -1,11 +1,24 @@
-from common.http import API_V1_DOCS_URL, API_V1_PREFIX, install_problem_handlers
+from common.http import (
+    API_V1_DOCS_URL,
+    API_V1_PREFIX,
+    install_correlation_middleware,
+    install_problem_handlers,
+)
 from fastapi import FastAPI
 
 from notifier.api.notifications import router as notifications_router
+from notifier.composition import install_lifespan
+from notifier.config import NotifierSettings
 
 
-def create_app() -> FastAPI:
-    app = FastAPI(docs_url=API_V1_DOCS_URL, openapi_url=f"{API_V1_PREFIX}/openapi.json")
+def create_app(settings: NotifierSettings | None = None) -> FastAPI:
+    settings = settings or NotifierSettings()
+    app = FastAPI(
+        docs_url=API_V1_DOCS_URL,
+        openapi_url=f"{API_V1_PREFIX}/openapi.json",
+    )
+    install_correlation_middleware(app)
     install_problem_handlers(app)
+    install_lifespan(app, settings)
     app.include_router(notifications_router, prefix=API_V1_PREFIX)
     return app

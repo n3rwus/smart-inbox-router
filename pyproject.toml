@@ -89,6 +89,7 @@ forbidden_modules = [
 name = "Common domain modules must not depend on HTTP or SMTP adapters"
 type = "forbidden"
 source_modules = [
+    "common.db",
     "common.departments",
     "common.email_headers",
     "common.errors",

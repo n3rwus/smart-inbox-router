@@ -3,7 +3,7 @@ import json
 from common.errors import AppError, DeliveryFailedError, ErrorCode
 from common.http import (
     PROBLEM_JSON_MEDIA_TYPE,
-    install_correlation_middleware,
+    CorrelationIdMiddleware,
     install_problem_handlers,
 )
 from common.http.problems import STATUS_BY_CODE
@@ -53,7 +53,7 @@ class _EchoPayload(BaseModel):
 
 def _full_app() -> FastAPI:
     app = FastAPI()
-    install_correlation_middleware(app)
+    app.add_middleware(CorrelationIdMiddleware)
     install_problem_handlers(app)
 
     @app.post("/echo")

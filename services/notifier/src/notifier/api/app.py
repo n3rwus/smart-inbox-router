@@ -1,7 +1,7 @@
 from common.http import (
     API_V1_DOCS_URL,
     API_V1_PREFIX,
-    install_correlation_middleware,
+    CorrelationIdMiddleware,
     install_problem_handlers,
 )
 from fastapi import FastAPI
@@ -18,7 +18,7 @@ def create_app(settings: NotifierSettings | None = None) -> FastAPI:
         docs_url=API_V1_DOCS_URL,
         openapi_url=f"{API_V1_PREFIX}/openapi.json",
     )
-    install_correlation_middleware(app)
+    app.add_middleware(CorrelationIdMiddleware)
     install_problem_handlers(app)
     install_lifespan(app, settings)
     app.include_router(notifications_router, prefix=API_V1_PREFIX)

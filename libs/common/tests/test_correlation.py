@@ -2,8 +2,7 @@ import json
 
 import pytest
 from common.errors import DeliveryFailedError
-from common.http import CORRELATION_ID_HEADER, install_problem_handlers
-from common.http.correlation import install_correlation_middleware
+from common.http import CORRELATION_ID_HEADER, CorrelationIdMiddleware, install_problem_handlers
 from common.log import correlation_id
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
@@ -13,7 +12,7 @@ GIVEN_ID = "cid-from-client-01"
 
 def _build_app() -> tuple[FastAPI, dict[str, str | None]]:
     app = FastAPI()
-    install_correlation_middleware(app)
+    app.add_middleware(CorrelationIdMiddleware)
     install_problem_handlers(app)
     seen: dict[str, str | None] = {}
 

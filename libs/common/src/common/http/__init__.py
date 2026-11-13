@@ -1,8 +1,4 @@
-from common.http.correlation import (
-    CORRELATION_ID_HEADER,
-    CorrelationIdMiddleware,
-    install_correlation_middleware,
-)
+from common.http.correlation import CORRELATION_ID_HEADER, CorrelationIdMiddleware
 from common.http.problems import STATUS_BY_CODE, install_problem_handlers
 from common.http.server import (
     DEFAULT_HTTP_HOST,
@@ -24,6 +20,5 @@ __all__ = [
     "STATUS_BY_CODE",
     "CorrelationIdMiddleware",
     "HttpServerConfig",
-    "install_correlation_middleware",
     "install_problem_handlers",
 ]

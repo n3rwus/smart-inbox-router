@@ -4,9 +4,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from common.errors import AppError, ErrorCode
+from common.http.media import PROBLEM_JSON_MEDIA_TYPE
 from common.log import correlation_id
-
-PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
 
 STATUS_BY_CODE: dict[ErrorCode, int] = {
     ErrorCode.INVALID_SENDER: status.HTTP_400_BAD_REQUEST,

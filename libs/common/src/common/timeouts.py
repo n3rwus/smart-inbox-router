@@ -1,9 +1,9 @@
 """Deadline handling shared by outbound adapters."""
 
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable, Coroutine
 from functools import wraps
-from typing import Concatenate, Protocol
+from typing import Any, Concatenate, Protocol
 
 from common.errors import UpstreamTimeoutError
 
@@ -14,8 +14,8 @@ class HasTimeout(Protocol):
 
 
 def with_timeout[S: HasTimeout, **P, R](
-    method: Callable[Concatenate[S, P], Awaitable[R]],
-) -> Callable[Concatenate[S, P], Awaitable[R]]:
+    method: Callable[Concatenate[S, P], Coroutine[Any, Any, R]],
+) -> Callable[Concatenate[S, P], Coroutine[Any, Any, R]]:
     """Bound an async method by ``self.timeout_seconds``; raise UpstreamTimeoutError on expiry."""
 
     async def wrapper(self: S, /, *args: P.args, **kwargs: P.kwargs) -> R:

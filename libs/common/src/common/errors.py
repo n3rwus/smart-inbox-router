@@ -1,5 +1,7 @@
 from enum import StrEnum
 
+INTERNAL_ERROR_CODE = "internal_error"
+
 
 class ErrorCode(StrEnum):
     INVALID_SENDER = "invalid_sender"

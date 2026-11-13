@@ -72,6 +72,21 @@ def test_problem_details_include_correlation_id() -> None:
     assert body["correlation_id"] == GIVEN_ID
 
 
+def test_unhandled_500_still_carries_correlation_id() -> None:
+    app, _ = _build_app()
+
+    @app.get("/kaboom")
+    async def kaboom() -> None:
+        raise RuntimeError("boom")
+
+    client = TestClient(app, raise_server_exceptions=False)
+
+    response = client.get("/kaboom", headers={CORRELATION_ID_HEADER: GIVEN_ID})
+
+    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    assert response.headers.get(CORRELATION_ID_HEADER) == GIVEN_ID
+
+
 @pytest.mark.parametrize("bad", ["", "with space", "a\r\nb"])
 def test_invalid_incoming_id_is_replaced_with_generated(bad: str) -> None:
     app, _ = _build_app()

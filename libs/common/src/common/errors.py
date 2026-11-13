@@ -1,7 +1,5 @@
 from enum import StrEnum
 
-INTERNAL_ERROR_CODE = "internal_error"
-
 
 class ErrorCode(StrEnum):
     INVALID_SENDER = "invalid_sender"
@@ -12,6 +10,8 @@ class ErrorCode(StrEnum):
     UPSTREAM_TIMEOUT = "upstream_timeout"
     IDEMPOTENCY_CONFLICT = "idempotency_conflict"
     NOT_READY = "not_ready"
+    VALIDATION_FAILED = "validation_failed"
+    INTERNAL_ERROR = "internal_error"
 
 
 class AppError(Exception):

@@ -8,7 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from common.errors import INTERNAL_ERROR_CODE, AppError, ErrorCode
+from common.errors import AppError, ErrorCode
 from common.http.media import PROBLEM_JSON_MEDIA_TYPE
 from common.log import correlation_id
 
@@ -21,6 +21,8 @@ STATUS_BY_CODE: dict[ErrorCode, int] = {
     ErrorCode.UPSTREAM_TIMEOUT: status.HTTP_504_GATEWAY_TIMEOUT,
     ErrorCode.IDEMPOTENCY_CONFLICT: status.HTTP_409_CONFLICT,
     ErrorCode.NOT_READY: status.HTTP_503_SERVICE_UNAVAILABLE,
+    ErrorCode.VALIDATION_FAILED: status.HTTP_422_UNPROCESSABLE_CONTENT,
+    ErrorCode.INTERNAL_ERROR: status.HTTP_500_INTERNAL_SERVER_ERROR,
 }
 
 
@@ -69,7 +71,6 @@ def install_problem_handlers(app: FastAPI) -> None:
         return _problem_response(
             http_status=STATUS_BY_CODE[exc.code],
             code=exc.code.value,
-            title=exc.code.value.replace("_", " "),
             detail=exc.detail,
         )
 
@@ -80,8 +81,8 @@ def install_problem_handlers(app: FastAPI) -> None:
             for err in exc.errors()
         ]
         return _problem_response(
-            http_status=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            code="validation_failed",
+            http_status=STATUS_BY_CODE[ErrorCode.VALIDATION_FAILED],
+            code=ErrorCode.VALIDATION_FAILED.value,
             extra={"errors": errors},
         )
 
@@ -98,6 +99,6 @@ def install_problem_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def _handle_unexpected(_: Request, __: Exception) -> JSONResponse:
         return _problem_response(
-            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            code=INTERNAL_ERROR_CODE,
+            http_status=STATUS_BY_CODE[ErrorCode.INTERNAL_ERROR],
+            code=ErrorCode.INTERNAL_ERROR.value,
         )

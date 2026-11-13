@@ -6,7 +6,7 @@ import uuid
 from fastapi import status
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from common.errors import INTERNAL_ERROR_CODE
+from common.errors import ErrorCode
 from common.http.media import PROBLEM_JSON_MEDIA_TYPE
 from common.log import correlation_id
 
@@ -61,7 +61,7 @@ class CorrelationIdMiddleware:
                         "title": "internal error",
                         "status": status.HTTP_500_INTERNAL_SERVER_ERROR,
                         "detail": "internal server error",
-                        "code": INTERNAL_ERROR_CODE,
+                        "code": ErrorCode.INTERNAL_ERROR.value,
                         "correlation_id": cid,
                     }
                 ).encode("utf-8")

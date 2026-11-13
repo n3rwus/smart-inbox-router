@@ -42,6 +42,7 @@ def test_app_error_becomes_problem_json():
     assert response.headers["content-type"].startswith("application/problem+json")
     body = json.loads(response.content)
     assert body["code"] == ErrorCode.DELIVERY_FAILED.value
+    assert body["title"] == "Bad Gateway"
     assert body["detail"] == "smtp down"
     assert body["status"] == status.HTTP_502_BAD_GATEWAY
 

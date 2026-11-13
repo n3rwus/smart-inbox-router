@@ -1,3 +1,4 @@
+from common.http import HttpServerConfig
 from common.settings import BaseServiceSettings
 from common.smtp import SmtpConfig
 from pydantic import EmailStr, Field
@@ -14,4 +15,5 @@ class NotifierSettings(BaseServiceSettings):
     )
 
     smtp: SmtpConfig = Field(default_factory=SmtpConfig)
+    http: HttpServerConfig = Field(default_factory=HttpServerConfig)
     from_address: EmailStr = "smart-inbox-router@example.com"

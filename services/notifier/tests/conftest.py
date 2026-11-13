@@ -2,6 +2,7 @@ from email.message import EmailMessage
 
 import pytest
 from common.errors import DeliveryFailedError
+from notifier.adapters.in_memory_delivery_log import InMemoryDeliveryLog
 
 
 class InMemoryEmailSender:
@@ -13,17 +14,6 @@ class InMemoryEmailSender:
         if self.fail:
             raise DeliveryFailedError("simulated SMTP failure")
         self.sent.append(email)
-
-
-class InMemoryDeliveryLog:
-    def __init__(self) -> None:
-        self.delivered: set[str] = set()
-
-    async def is_delivered(self, message_id: str) -> bool:
-        return message_id in self.delivered
-
-    async def mark_delivered(self, message_id: str) -> None:
-        self.delivered.add(message_id)
 
 
 @pytest.fixture

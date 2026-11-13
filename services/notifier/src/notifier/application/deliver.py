@@ -36,21 +36,22 @@ async def deliver(
     started = time.monotonic()
     extra = {"message_id": notification.message_id, "department": notification.department.value}
 
-    if await log.is_delivered(notification.message_id):
-        _log.info(
-            "delivery skipped",
-            extra={**extra, "outcome": DeliveryOutcome.ALREADY_SENT.value, "duration_ms": 0},
-        )
-        return DeliveryOutcome.ALREADY_SENT
+    async with log.lock(notification.message_id):
+        if await log.is_delivered(notification.message_id):
+            _log.info(
+                "delivery skipped",
+                extra={**extra, "outcome": DeliveryOutcome.ALREADY_SENT.value, "duration_ms": 0},
+            )
+            return DeliveryOutcome.ALREADY_SENT
 
-    email = build_email(
-        department=notification.department,
-        sender=notification.sender,
-        message=notification.message,
-        from_address=from_address,
-    )
-    await sender.send(email)
-    await log.mark_delivered(notification.message_id)
+        email = build_email(
+            department=notification.department,
+            sender=notification.sender,
+            message=notification.message,
+            from_address=from_address,
+        )
+        await sender.send(email)
+        await log.mark_delivered(notification.message_id)
 
     _log.info(
         "delivery completed",

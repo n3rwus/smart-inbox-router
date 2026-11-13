@@ -6,3 +6,4 @@ class EmailHeader(StrEnum):
     TO = "To"
     REPLY_TO = "Reply-To"
     SUBJECT = "Subject"
+    MESSAGE_ID = "Message-ID"

@@ -68,6 +68,7 @@ async def deliver(
             return DeliveryOutcome.ALREADY_SENT
 
         email = build_email(
+            message_id=notification.message_id,
             department=notification.department,
             sender=notification.sender,
             message=notification.message,

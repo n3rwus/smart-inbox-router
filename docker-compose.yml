@@ -50,6 +50,9 @@ services:
     environment:
       NOTIFIER_HTTP__HOST: ${NOTIFIER_HTTP__HOST:-0.0.0.0}
       NOTIFIER_HTTP__PORT: ${NOTIFIER_HTTP__PORT:-8000}
+      NOTIFIER_SMTP__HOST: ${NOTIFIER_SMTP__HOST:-mailhog}
+      NOTIFIER_SMTP__PORT: ${NOTIFIER_SMTP__PORT:-1025}
+      NOTIFIER_SMTP__START_TLS: ${NOTIFIER_SMTP__START_TLS:-false}
     networks: [mail-net, notify-net]
     depends_on: [mailhog]
     healthcheck:
@@ -59,10 +62,9 @@ services:
         - -c
         - |
           import os, urllib.request, sys
-          host = os.environ.get("NOTIFIER_HTTP__HOST", "127.0.0.1")
           port = os.environ.get("NOTIFIER_HTTP__PORT", "8000")
-          with urllib.request.urlopen(f"http://{host}:{port}/api/v1/health", timeout=2) as r:
-              sys.exit(0 if r.status == 204 else 1)
+          with urllib.request.urlopen(f"http://127.0.0.1:{port}/ready", timeout=2) as r:
+              sys.exit(0 if r.status == 200 else 1)
       interval: 10s
       timeout: 3s
       retries: 5

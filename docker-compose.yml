@@ -32,10 +32,9 @@ services:
     platform: linux/amd64
     # No ARM image is available; Apple Silicon runs this image through emulation.
     ports:
-      - "8025:8025"
-      - "127.0.0.1:1025:1025"
-    # Web UI on 8025; SMTP on 1025 is bound to the loopback interface only so
-    # host-side `uv run notifier` can reach it without exposing SMTP to the LAN.
+      - "127.0.0.1:8025:8025"
+    # Only the web UI is published, on loopback, since MailHog has no auth.
+    # SMTP 1025 stays internal; services reach it via the mail-net network.
     networks: [mail-net, edge]
     restart: unless-stopped
 

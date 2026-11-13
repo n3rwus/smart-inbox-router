@@ -2,9 +2,9 @@ from fastapi import APIRouter, status
 
 HEALTH_PATH = "/health"
 
-router = APIRouter(tags=["health"])
+router = APIRouter(include_in_schema=False)
 
 
-@router.get(HEALTH_PATH, status_code=status.HTTP_204_NO_CONTENT)
-async def health() -> None:
-    return None
+@router.get(HEALTH_PATH, status_code=status.HTTP_200_OK)
+async def health() -> dict[str, str]:
+    return {"status": "ok"}

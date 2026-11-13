@@ -22,5 +22,5 @@ def create_app(settings: NotifierSettings | None = None) -> FastAPI:
     install_problem_handlers(app)
     install_lifespan(app, settings)
     app.include_router(notifications_router, prefix=API_V1_PREFIX)
-    app.include_router(health_router, prefix=API_V1_PREFIX)
+    app.include_router(health_router)
     return app

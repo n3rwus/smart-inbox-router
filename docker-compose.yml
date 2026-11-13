@@ -37,6 +37,39 @@ services:
     networks: [mail-net, edge]
     restart: unless-stopped
 
+  notifier:
+    build:
+      context: .
+      args:
+        SERVICE: notifier
+    image: sir/notifier:dev
+    command: ["python", "-m", "notifier"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NOTIFIER_HTTP__HOST: ${NOTIFIER_HTTP__HOST:-0.0.0.0}
+      NOTIFIER_HTTP__PORT: ${NOTIFIER_HTTP__PORT:-8000}
+    networks: [mail-net, notify-net]
+    depends_on: [mailhog]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, urllib.request, sys
+          host = os.environ.get("NOTIFIER_HTTP__HOST", "127.0.0.1")
+          port = os.environ.get("NOTIFIER_HTTP__PORT", "8000")
+          with urllib.request.urlopen(f"http://{host}:{port}/api/v1/health", timeout=2) as r:
+              sys.exit(0 if r.status == 204 else 1)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    # No published ports: notifier is internal; only the router calls it over notify-net.
+
 volumes:
   ollama-models:
 
@@ -51,3 +84,6 @@ networks:
   mail-net:
     internal: true
   # Isolated network for mail services.
+  notify-net:
+    internal: true
+  # Isolated network for router → notifier traffic.

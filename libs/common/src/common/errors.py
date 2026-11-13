@@ -10,6 +10,8 @@ class ErrorCode(StrEnum):
     DELIVERY_FAILED = "delivery_failed"
     MESSAGE_NOT_FOUND = "message_not_found"
     UPSTREAM_TIMEOUT = "upstream_timeout"
+    IDEMPOTENCY_CONFLICT = "idempotency_conflict"
+    NOT_READY = "not_ready"
 
 
 class AppError(Exception):
@@ -26,3 +28,11 @@ class DeliveryFailedError(AppError):
 
 class UpstreamTimeoutError(AppError):
     code = ErrorCode.UPSTREAM_TIMEOUT
+
+
+class IdempotencyConflictError(AppError):
+    code = ErrorCode.IDEMPOTENCY_CONFLICT
+
+
+class NotReadyError(AppError):
+    code = ErrorCode.NOT_READY

@@ -4,7 +4,7 @@ from email.message import EmailMessage
 import aiosmtplib
 
 from common.email_headers import EmailHeader
-from common.errors import DeliveryFailedError
+from common.errors import DeliveryFailedError, NotReadyError
 from common.smtp.config import SmtpConfig
 from common.timeouts import with_timeout
 
@@ -39,3 +39,21 @@ class SmtpClient:
                 f"SMTP delivery to {self._config.host}:{self._config.port} failed"
             ) from exc
         logger.info("email delivered to %s", email[EmailHeader.TO])
+
+    @with_timeout
+    async def probe(self) -> None:
+        client = aiosmtplib.SMTP(
+            hostname=self._config.host,
+            port=self._config.port,
+            start_tls=self._config.start_tls,
+        )
+        try:
+            await client.connect()
+            try:
+                await client.noop()
+            finally:
+                await client.quit()
+        except (aiosmtplib.SMTPException, OSError) as exc:
+            raise NotReadyError(
+                f"SMTP probe to {self._config.host}:{self._config.port} failed"
+            ) from exc

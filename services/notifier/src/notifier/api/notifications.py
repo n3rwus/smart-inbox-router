@@ -16,14 +16,6 @@ class NotificationBody(BaseModel):
     sender: EmailStr
     body: str
 
-    def to_notification(self, message_id: str) -> Notification:
-        return Notification(
-            message_id=message_id,
-            department=self.department,
-            sender=self.sender,
-            message=self.body,
-        )
-
 
 def get_deliver(request: Request) -> Deliver:
     return cast(Deliver, request.app.state.deliver)
@@ -48,7 +40,14 @@ async def put_notification(
     response: Response,
     deliver_fn: Annotated[Deliver, Depends(get_deliver)],
 ) -> None:
-    outcome = await deliver_fn(payload.to_notification(str(message_id)))
+    outcome = await deliver_fn(
+        Notification(
+            message_id=str(message_id),
+            department=payload.department,
+            sender=payload.sender,
+            message=payload.body,
+        )
+    )
     if outcome is DeliveryOutcome.SENT:
         response.status_code = status.HTTP_201_CREATED
         response.headers["Location"] = f"{API_V1_PREFIX}{NOTIFICATIONS_PATH}/{message_id}"

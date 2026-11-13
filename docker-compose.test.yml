@@ -10,10 +10,15 @@ services:
       MAILHOG_API_URL: http://mailhog:8025/api
       MAILHOG_SMTP_HOST: mailhog
       MAILHOG_SMTP_PORT: "1025"
+      NOTIFIER_BASE_URL: http://notifier:${NOTIFIER_HTTP__PORT:-8000}
     entrypoint: ["uv"]
     command: ["run", "pytest", "-m", "integration", "--no-cov"]
-    networks: [mail-net, egress]
-    depends_on: [mailhog]
+    networks: [mail-net, notify-net, egress]
+    depends_on:
+      mailhog:
+        condition: service_started
+      notifier:
+        condition: service_healthy
 
 volumes:
   integration-uv-cache:

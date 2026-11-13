@@ -16,7 +16,7 @@ lint:  ; uv run ruff format --check . && uv run ruff check . && uv run mypy && u
 fmt:   ; uv run ruff format . && uv run ruff check --fix .
 test:  ; uv run pytest --cov
 test-integration:
-	docker compose -f docker-compose.yml -f docker-compose.test.yml \
+	docker compose -f docker-compose.yml -f docker-compose.test.yml --profile test \
 		run --rm integration-tests
 check: ; uv run pre-commit run --all-files
 hooks: ; uv run pre-commit install

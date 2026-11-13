@@ -1,6 +1,7 @@
 services:
   integration-tests:
     image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    profiles: [test]
     working_dir: /src
     volumes:
       - .:/src

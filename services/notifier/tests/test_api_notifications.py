@@ -104,3 +104,23 @@ async def test_non_uuid_message_id_is_rejected_with_422() -> None:
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert not calls
+
+
+async def test_422_response_does_not_leak_user_input() -> None:
+    calls, deliver = _recording()
+    leaky_sender = "leak-me@@x"
+    leaky_body = "secret-body-value-xyz"
+
+    response = await _put(
+        deliver,
+        body={"department": "it", "sender": leaky_sender, "body": leaky_body},
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert response.headers["content-type"].startswith(PROBLEM_JSON_MEDIA_TYPE)
+    text = response.text
+    assert leaky_sender not in text
+    assert "leak-me" not in text
+    body = response.json()
+    assert body["code"] == "validation_failed"
+    assert not calls

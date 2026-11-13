@@ -17,8 +17,8 @@
 
 The notifier runs as its own container and owns email delivery: recipient
 allowlist, `Reply-To`, idempotency. The router calls it via
-`POST /api/v1/notifications` through a `Notifier` port, so the transport can
-change without touching the agent.
+`PUT /api/v1/notifications/{message_id}` through a `Notifier` port, so the
+transport can change without touching the agent.
 
 **Security invariant:** the agent's tool `send_to_department(department)`
 takes only the department enum from the LLM. Message id, sender address and
@@ -27,8 +27,44 @@ a message cannot change recipients or `Reply-To`.
 
 **Trade-off:** an extra container and an HTTP client with timeouts, in exchange
 for independent deployment and a real service boundary. The notifier is
-internal only (no published port). An MCP interface was considered and skipped
-as unnecessary for this PoC.
+internal only — no published port, reachable only from the router over the
+`notify-net` compose network. An MCP interface was considered and skipped as
+unnecessary for this PoC. There is no authentication between router and
+notifier; both live on an internal compose network, which is good enough for
+the PoC and will need mTLS or a shared secret before any external exposure.
+
+### Notifier HTTP contract
+
+| Endpoint | Semantics |
+|----------|-----------|
+| `PUT /api/v1/notifications/{message_id}` | Idempotent send. `message_id` is a UUID in the path. Body: `department`, `sender`, `body` — no recipient or `Reply-To`, notifier sets both. |
+| `GET /health` | Liveness, always 200 (`include_in_schema=False`). |
+| `GET /ready` | Readiness: connects to SMTP (NOOP, no mail sent). 200 or Problem Details 503 (`not_ready`). Compose healthcheck targets this endpoint on `127.0.0.1`. |
+
+Response codes on PUT:
+
+- **201 Created** with `Location` header — the mail was just sent.
+- **200 OK** — the same `message_id` had already been delivered with identical
+  content (department, sender, body); no new mail is sent.
+- **409 Conflict** (`idempotency_conflict`) — the same `message_id` was reused
+  with a different body. `DeliveryLog` keeps a SHA-256 hash of the content
+  under each id to detect this without storing the message text.
+- **422 / 502 / 504** as Problem Details, as before.
+
+### Correlation ID
+
+Every request carries `X-Correlation-ID`. Missing or malformed values are
+replaced by a server-generated UUID. The id is echoed back on the response
+(including 500 and Problem Details responses) and attached to log records
+and OTel spans via a ContextVar.
+
+### Idempotency log is in-memory for the PoC
+
+`DeliveryLog` is a process-local dict guarded by per-`message_id` locks.
+A single notifier replica guarantees exactly-once per id for its lifetime.
+After a restart the memory is gone — a router retry across the restart can
+produce a duplicate mail. The upgrade path is a SQL-backed adapter behind the
+same `DeliveryLog` port.
 
 ### Notifier SMTP config
 

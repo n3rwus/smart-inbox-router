@@ -6,6 +6,7 @@ from common.http import (
 )
 from fastapi import FastAPI
 
+from notifier.api.health import router as health_router
 from notifier.api.notifications import router as notifications_router
 from notifier.composition import install_lifespan
 from notifier.config import NotifierSettings
@@ -21,4 +22,5 @@ def create_app(settings: NotifierSettings | None = None) -> FastAPI:
     install_problem_handlers(app)
     install_lifespan(app, settings)
     app.include_router(notifications_router, prefix=API_V1_PREFIX)
+    app.include_router(health_router, prefix=API_V1_PREFIX)
     return app

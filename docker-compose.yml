@@ -49,11 +49,13 @@ services:
       - path: .env
         required: false
     environment:
-      NOTIFIER_HTTP__HOST: ${NOTIFIER_HTTP__HOST:-0.0.0.0}
-      NOTIFIER_HTTP__PORT: ${NOTIFIER_HTTP__PORT:-8000}
-      NOTIFIER_SMTP__HOST: ${NOTIFIER_SMTP__HOST:-mailhog}
-      NOTIFIER_SMTP__PORT: ${NOTIFIER_SMTP__PORT:-1025}
-      NOTIFIER_SMTP__START_TLS: ${NOTIFIER_SMTP__START_TLS:-false}
+      NOTIFIER_HTTP__HOST: 0.0.0.0
+      NOTIFIER_HTTP__PORT: 8000
+      # SMTP targets the compose mailhog service; interpolation would let the
+      # host .env (which carries localhost for `uv run notifier`) leak in here.
+      NOTIFIER_SMTP__HOST: mailhog
+      NOTIFIER_SMTP__PORT: 1025
+      NOTIFIER_SMTP__START_TLS: "false"
     networks: [mail-net, notify-net]
     depends_on: [mailhog]
     healthcheck:

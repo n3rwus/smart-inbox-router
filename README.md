@@ -63,8 +63,10 @@ and OTel spans via a ContextVar.
 `DeliveryLog` is a process-local dict guarded by per-`message_id` locks.
 A single notifier replica guarantees exactly-once per id for its lifetime.
 After a restart the memory is gone — a router retry across the restart can
-produce a duplicate mail. The upgrade path is a SQL-backed adapter behind the
-same `DeliveryLog` port.
+produce a duplicate mail. Each outgoing message carries a deterministic
+`Message-ID: <{message_id}@notifier.smart-inbox-router>`, so a recipient's
+mailbox can still dedupe post-restart duplicates. The upgrade path is a
+SQL-backed adapter behind the same `DeliveryLog` port.
 
 ### Notifier SMTP config
 

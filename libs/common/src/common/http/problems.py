@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from common.errors import AppError, ErrorCode
+from common.log import correlation_id
 
 PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
 
@@ -30,5 +31,6 @@ def install_problem_handlers(app: FastAPI) -> None:
                 "status": http_status,
                 "detail": exc.detail,
                 "code": exc.code.value,
+                "correlation_id": correlation_id.get(),
             },
         )

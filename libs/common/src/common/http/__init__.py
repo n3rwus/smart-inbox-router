@@ -1,3 +1,8 @@
+from common.http.correlation import (
+    CORRELATION_ID_HEADER,
+    CorrelationIdMiddleware,
+    install_correlation_middleware,
+)
 from common.http.problems import STATUS_BY_CODE, install_problem_handlers
 
 API_V1_PREFIX = "/api/v1"
@@ -7,7 +12,10 @@ PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
 __all__ = [
     "API_V1_DOCS_URL",
     "API_V1_PREFIX",
+    "CORRELATION_ID_HEADER",
     "PROBLEM_JSON_MEDIA_TYPE",
     "STATUS_BY_CODE",
+    "CorrelationIdMiddleware",
+    "install_correlation_middleware",
     "install_problem_handlers",
 ]

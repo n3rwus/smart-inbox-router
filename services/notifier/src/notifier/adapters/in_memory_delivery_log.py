@@ -1,18 +1,20 @@
 import asyncio
 from contextlib import AbstractAsyncContextManager
 
+# ponytail: unbounded per-message lock dict; see D-009 — swap for SQL-backed log if memory grows.
+
 
 class InMemoryDeliveryLog:
     def __init__(self) -> None:
-        self._delivered: set[str] = set()
+        self._hashes: dict[str, str] = {}
         self._locks: dict[str, asyncio.Lock] = {}
         self._registry_lock = asyncio.Lock()
 
-    async def is_delivered(self, message_id: str) -> bool:
-        return message_id in self._delivered
+    async def stored_hash(self, message_id: str) -> str | None:
+        return self._hashes.get(message_id)
 
-    async def mark_delivered(self, message_id: str) -> None:
-        self._delivered.add(message_id)
+    async def record(self, message_id: str, content_hash: str) -> None:
+        self._hashes[message_id] = content_hash
 
     def lock(self, message_id: str) -> AbstractAsyncContextManager[None]:
         return _MessageLock(self, message_id)

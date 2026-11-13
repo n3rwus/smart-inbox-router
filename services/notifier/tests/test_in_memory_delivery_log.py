@@ -12,26 +12,29 @@ CONCURRENT_CALLS = 8
 FROM_ADDRESS = "router@test.local"
 
 
-async def test_new_id_is_not_delivered() -> None:
+CONTENT_HASH = "abc" * 21 + "def"
+
+
+async def test_new_id_has_no_stored_hash() -> None:
     log = InMemoryDeliveryLog()
 
-    assert await log.is_delivered(MESSAGE_ID) is False
+    assert await log.stored_hash(MESSAGE_ID) is None
 
 
-async def test_mark_then_is_delivered() -> None:
+async def test_record_then_stored_hash_returns_it() -> None:
     log = InMemoryDeliveryLog()
 
-    await log.mark_delivered(MESSAGE_ID)
+    await log.record(MESSAGE_ID, CONTENT_HASH)
 
-    assert await log.is_delivered(MESSAGE_ID) is True
+    assert await log.stored_hash(MESSAGE_ID) == CONTENT_HASH
 
 
 async def test_different_ids_do_not_share_state() -> None:
     log = InMemoryDeliveryLog()
 
-    await log.mark_delivered(MESSAGE_ID)
+    await log.record(MESSAGE_ID, CONTENT_HASH)
 
-    assert await log.is_delivered("msg-2") is False
+    assert await log.stored_hash("msg-2") is None
 
 
 async def test_lock_serializes_same_id_sections() -> None:

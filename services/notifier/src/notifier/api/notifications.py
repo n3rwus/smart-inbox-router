@@ -1,32 +1,24 @@
 from typing import Annotated, cast
+from uuid import UUID
 
 from common.departments import Department
-from fastapi import APIRouter, Depends, Request, status
-from pydantic import BaseModel, EmailStr, field_validator
+from common.http import API_V1_PREFIX
+from fastapi import APIRouter, Depends, Request, Response, status
+from pydantic import BaseModel, EmailStr
 
-from notifier.application.deliver import Deliver, Notification
+from notifier.application.deliver import Deliver, DeliveryOutcome, Notification
 
 NOTIFICATIONS_PATH = "/notifications"
 
-DeliverHandler = Deliver
 
-
-class NotificationRequest(BaseModel):
-    message_id: str
+class NotificationBody(BaseModel):
     department: Department
     sender: EmailStr
     body: str
 
-    @field_validator("message_id")
-    @classmethod
-    def _reject_crlf_in_message_id(cls, value: str) -> str:
-        if "\r" in value or "\n" in value:
-            raise ValueError("CR/LF not allowed in message_id")
-        return value
-
-    def to_notification(self) -> Notification:
+    def to_notification(self, message_id: str) -> Notification:
         return Notification(
-            message_id=self.message_id,
+            message_id=message_id,
             department=self.department,
             sender=self.sender,
             message=self.body,
@@ -40,16 +32,25 @@ def get_deliver(request: Request) -> Deliver:
 router = APIRouter(tags=["notifications"])
 
 
-@router.post(
-    NOTIFICATIONS_PATH,
-    status_code=status.HTTP_204_NO_CONTENT,
+@router.put(
+    f"{NOTIFICATIONS_PATH}/{{message_id}}",
+    status_code=status.HTTP_201_CREATED,
     responses={
+        status.HTTP_200_OK: {"description": "Replay of an already-delivered message"},
+        status.HTTP_409_CONFLICT: {"description": "message_id reused with different content"},
         status.HTTP_502_BAD_GATEWAY: {"description": "SMTP server rejected or unreachable"},
         status.HTTP_504_GATEWAY_TIMEOUT: {"description": "SMTP server did not answer in time"},
     },
 )
-async def create_notification(
-    payload: NotificationRequest,
+async def put_notification(
+    message_id: UUID,
+    payload: NotificationBody,
+    response: Response,
     deliver_fn: Annotated[Deliver, Depends(get_deliver)],
 ) -> None:
-    await deliver_fn(payload.to_notification())
+    outcome = await deliver_fn(payload.to_notification(str(message_id)))
+    if outcome is DeliveryOutcome.SENT:
+        response.status_code = status.HTTP_201_CREATED
+        response.headers["Location"] = f"{API_V1_PREFIX}{NOTIFICATIONS_PATH}/{message_id}"
+    else:
+        response.status_code = status.HTTP_200_OK

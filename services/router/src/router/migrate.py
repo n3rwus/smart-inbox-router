@@ -2,6 +2,7 @@
 
 from alembic import command
 from alembic.config import Config
+from common.log import configure_logging
 
 from router.config import RouterSettings
 
@@ -17,6 +18,7 @@ def build_config(database_url: str) -> Config:
 
 def main() -> None:
     settings = RouterSettings()
+    configure_logging(level=settings.log_level, json_output=settings.log_json)
     command.upgrade(build_config(settings.database_url), "head")
 
 

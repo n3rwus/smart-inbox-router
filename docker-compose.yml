@@ -75,8 +75,97 @@ services:
     restart: unless-stopped
     # No published ports: notifier is internal; only the router calls it over notify-net.
 
+  router-migrate:
+    build:
+      context: .
+      args:
+        SERVICE: router
+    image: sir/router:dev
+    command: ["migrate"]
+    environment:
+      ROUTER_DATABASE_URL: sqlite+aiosqlite:////data/router.db
+    volumes:
+      - router-data:/data
+    restart: "no"
+    # One-shot: runs alembic upgrade head against the shared SQLite file, then exits.
+
+  router-api:
+    image: sir/router:dev
+    command: ["api"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ROUTER_HTTP__HOST: 0.0.0.0
+      ROUTER_HTTP__PORT: 8000
+      ROUTER_DATABASE_URL: sqlite+aiosqlite:////data/router.db
+    volumes:
+      - router-data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [edge]
+    depends_on:
+      router-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, urllib.request, sys
+          port = os.environ.get("ROUTER_HTTP__PORT", "8000")
+          with urllib.request.urlopen(f"http://127.0.0.1:{port}/ready", timeout=2) as r:
+              sys.exit(0 if r.status == 200 else 1)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  router-agent:
+    image: sir/router:dev
+    command: ["agent"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ROUTER_DATABASE_URL: sqlite+aiosqlite:////data/router.db
+      ROUTER_NOTIFIER__BASE_URL: http://notifier:8000
+      ROUTER_LLM__BASE_URL: http://ollama:11434/v1
+      # Keep the agent and the ollama pre-pull on the exact same model.
+      ROUTER_LLM__MODEL: ${LLM__MODEL:-qwen2.5:3b}
+      ROUTER_WORKER__HEARTBEAT_PATH: /data/router-agent.alive
+    volumes:
+      - router-data:/data
+    networks: [notify-net, llm-net]
+    depends_on:
+      router-migrate:
+        condition: service_completed_successfully
+      notifier:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, sys, time
+          path = os.environ.get("ROUTER_WORKER__HEARTBEAT_PATH", "/data/router-agent.alive")
+          if not os.path.exists(path):
+              sys.exit(1)
+          sys.exit(0 if time.time() - os.path.getmtime(path) < 30 else 1)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
 volumes:
   ollama-models:
+  router-data:
 
 networks:
   edge: {}

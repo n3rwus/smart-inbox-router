@@ -3,7 +3,11 @@ from uuid import uuid4
 import httpx
 import pytest
 from common.departments import Department
-from common.errors import LlmUnavailableError
+from common.errors import (
+    DeliveryFailedError,
+    LlmUnavailableError,
+    UpstreamTimeoutError,
+)
 from pydantic_ai.messages import (
     ModelMessage,
     ModelResponse,
@@ -15,6 +19,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 from router.adapters.routing_agent import TOOL_NAME, build_routing_agent
 from router.application.route import route_message
+from router.ports.notifier import DeliveryRejectedError
 from router.ports.routing_agent import RoutingDeps
 
 from .fakes import FakeNotifier
@@ -173,3 +178,58 @@ async def test_connection_error_raises_llm_unavailable_without_notifying() -> No
         )
 
     assert notifier.calls == []
+
+
+NOTIFIER_ERRORS = [
+    ("delivery_failed", DeliveryFailedError, "boom"),
+    ("delivery_rejected", DeliveryRejectedError, "nope"),
+    ("upstream_timeout", UpstreamTimeoutError, "slow"),
+]
+
+
+@pytest.mark.parametrize(
+    ("error_cls", "message"),
+    [(cls, msg) for _, cls, msg in NOTIFIER_ERRORS],
+    ids=[name for name, _, _ in NOTIFIER_ERRORS],
+)
+async def test_notifier_error_in_tool_propagates_without_fallback(
+    error_cls: type[Exception], message: str
+) -> None:
+    notifier = FakeNotifier(error=error_cls(message))
+
+    def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
+        return _response_tool(Department.IT.value)
+
+    adapter = build_routing_agent(FunctionModel(fn))
+    deps = _deps(notifier)
+
+    with pytest.raises(error_cls):
+        await adapter.run(deps)
+
+    assert deps.sent_to is None
+    assert len(notifier.calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("error_cls", "message"),
+    [(cls, msg) for _, cls, msg in NOTIFIER_ERRORS],
+    ids=[name for name, _, _ in NOTIFIER_ERRORS],
+)
+async def test_route_message_does_not_fallback_when_notifier_errors(
+    error_cls: type[Exception], message: str
+) -> None:
+    notifier = FakeNotifier(error=error_cls(message))
+
+    def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
+        return _response_tool(Department.IT.value)
+
+    with pytest.raises(error_cls):
+        await route_message(
+            message_id=uuid4(),
+            sender_email="alice@example.com",
+            body="hi",
+            agent=build_routing_agent(FunctionModel(fn)),
+            notifier=notifier,
+        )
+
+    assert len(notifier.calls) == 1

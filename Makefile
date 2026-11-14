@@ -23,7 +23,7 @@ hooks: ; uv run pre-commit install
 smoke: ; ./scripts/smoke_test.sh
 eval:
 	docker compose -f docker-compose.yml -f docker-compose.eval.yml --profile eval \
-		run --rm --build eval
+		run --rm --build --user "$$(id -u):$$(id -g)" eval
 
 # --- Docker Compose ---
 up:    ; docker compose up -d

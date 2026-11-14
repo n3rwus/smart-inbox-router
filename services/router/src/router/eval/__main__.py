@@ -13,6 +13,7 @@ import asyncio
 import json
 import os
 import statistics
+import sys
 import time
 from collections import Counter
 from dataclasses import asdict, dataclass, field
@@ -242,7 +243,14 @@ def main() -> None:
     agent = build_routing_agent(model, timeout_seconds=settings.llm.timeout_seconds)
 
     results = asyncio.run(_run_all(agent, cases))
-    _write_report(report_path, _render(results, settings))
+    rendered = _render(results, settings)
+    print()
+    print(rendered)
+    try:
+        _write_report(report_path, rendered)
+    except OSError as exc:
+        print(f"ERROR: failed to write {report_path}: {exc}", file=sys.stderr)
+        sys.exit(1)
     print(f"wrote {report_path}")
 
 

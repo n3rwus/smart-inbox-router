@@ -243,6 +243,45 @@ def test_exponential_backoff_schedule() -> None:
     assert exponential_backoff(20).total_seconds() == 60.0
 
 
+async def test_heartbeat_fires_while_process_next_blocks() -> None:
+    repo, _ = await _seeded_repo()
+    notifier = FakeNotifier()
+
+    release = asyncio.Event()
+
+    class _BlockingAgent:
+        async def run(self, deps: RoutingDeps) -> None:
+            deps.sent_to = Department.IT
+            await release.wait()
+
+    settings = RouterSettings(_env_file=None)
+    stop = asyncio.Event()
+    beats = 0
+
+    def heartbeat() -> None:
+        nonlocal beats
+        beats += 1
+
+    task = asyncio.create_task(
+        run_worker(
+            settings=settings,
+            repository=repo,
+            agent=_BlockingAgent(),
+            notifier=notifier,
+            stop=stop,
+            heartbeat=heartbeat,
+            heartbeat_interval_seconds=0.05,
+        )
+    )
+    try:
+        await asyncio.sleep(0.3)
+        assert beats >= 3, f"expected several heartbeats while blocked, got {beats}"
+    finally:
+        release.set()
+        stop.set()
+        await asyncio.wait_for(task, timeout=2)
+
+
 async def test_run_worker_stops_on_event_and_does_not_busy_loop() -> None:
     repo = InMemoryMessageRepository()
     agent = _StubAgent()

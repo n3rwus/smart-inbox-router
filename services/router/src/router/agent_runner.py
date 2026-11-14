@@ -20,6 +20,7 @@ from router.ports.routing_agent import RoutingAgent
 
 BACKOFF_BASE_SECONDS = 2.0
 BACKOFF_MAX_SECONDS = 60.0
+HEARTBEAT_INTERVAL_SECONDS = 5.0
 
 _log = logging.getLogger("router.agent_runner")
 
@@ -38,6 +39,15 @@ def _touch(path: Path) -> None:
     path.touch(exist_ok=True)
 
 
+async def _heartbeat_loop(
+    heartbeat: Callable[[], None], stop: asyncio.Event, interval_seconds: float
+) -> None:
+    while not stop.is_set():
+        heartbeat()
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(stop.wait(), timeout=interval_seconds)
+
+
 async def run_worker(
     *,
     settings: RouterSettings,
@@ -47,23 +57,33 @@ async def run_worker(
     stop: asyncio.Event,
     clock: Callable[[], datetime] = _utcnow,
     heartbeat: Callable[[], None] | None = None,
+    heartbeat_interval_seconds: float = HEARTBEAT_INTERVAL_SECONDS,
 ) -> None:
     poll_interval = settings.worker.poll_interval_seconds
-    while not stop.is_set():
-        if heartbeat is not None:
-            heartbeat()
-        processed = await process_next(
-            repository=repository,
-            agent=agent,
-            notifier=notifier,
-            clock=clock,
-            max_attempts=settings.worker.max_attempts,
-            backoff=exponential_backoff,
+    heartbeat_task: asyncio.Task[None] | None = None
+    if heartbeat is not None:
+        heartbeat_task = asyncio.create_task(
+            _heartbeat_loop(heartbeat, stop, heartbeat_interval_seconds)
         )
-        if processed:
-            continue
-        with contextlib.suppress(TimeoutError):
-            await asyncio.wait_for(stop.wait(), timeout=poll_interval)
+    try:
+        while not stop.is_set():
+            processed = await process_next(
+                repository=repository,
+                agent=agent,
+                notifier=notifier,
+                clock=clock,
+                max_attempts=settings.worker.max_attempts,
+                backoff=exponential_backoff,
+            )
+            if processed:
+                continue
+            with contextlib.suppress(TimeoutError):
+                await asyncio.wait_for(stop.wait(), timeout=poll_interval)
+    finally:
+        if heartbeat_task is not None:
+            heartbeat_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await heartbeat_task
 
 
 async def _main_async() -> None:

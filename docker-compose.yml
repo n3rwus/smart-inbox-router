@@ -1,6 +1,14 @@
 
 name: smart-inbox-router
 
+# Shared build context for every router image. Compose dedupes identical
+# `build:` sections under the same tag and builds the image exactly once on
+# `docker compose up -d` — no `--build` needed on a clean host.
+x-router-build: &router-build
+  context: .
+  args:
+    SERVICE: router
+
 services:
   ollama:
     image: ollama/ollama:0.40.15
@@ -20,7 +28,7 @@ services:
     image: ollama/ollama:0.40.15
     environment:
       OLLAMA_HOST: ollama:11434
-    entrypoint: ["ollama", "pull", "${LLM__MODEL:-qwen2.5:3b}"]
+    entrypoint: ["ollama", "pull", "${OLLAMA_MODEL:-qwen2.5:3b}"]
     depends_on:
       ollama:
         condition: service_healthy
@@ -76,10 +84,7 @@ services:
     # No published ports: notifier is internal; only the router calls it over notify-net.
 
   router-migrate:
-    build:
-      context: .
-      args:
-        SERVICE: router
+    build: *router-build
     image: sir/router:dev
     command: ["migrate"]
     environment:
@@ -90,6 +95,7 @@ services:
     # One-shot: runs alembic upgrade head against the shared SQLite file, then exits.
 
   router-api:
+    build: *router-build
     image: sir/router:dev
     command: ["api"]
     env_file:
@@ -124,6 +130,7 @@ services:
     restart: unless-stopped
 
   router-agent:
+    build: *router-build
     image: sir/router:dev
     command: ["agent"]
     env_file:
@@ -134,7 +141,8 @@ services:
       ROUTER_NOTIFIER__BASE_URL: http://notifier:8000
       ROUTER_LLM__BASE_URL: http://ollama:11434/v1
       # Keep the agent and the ollama pre-pull on the exact same model.
-      ROUTER_LLM__MODEL: ${LLM__MODEL:-qwen2.5:3b}
+      ROUTER_LLM__MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      ROUTER_LLM__TIMEOUT_SECONDS: ${ROUTER_LLM__TIMEOUT_SECONDS:-120}
       ROUTER_WORKER__HEARTBEAT_PATH: /data/router-agent.alive
     volumes:
       - router-data:/data
@@ -161,6 +169,9 @@ services:
       timeout: 3s
       retries: 5
       start_period: 15s
+    # Grace period must cover a full LLM call so an in-flight message finishes
+    # before SIGKILL; worker also exits cleanly on SIGTERM (asyncio.Event).
+    stop_grace_period: 130s
     restart: unless-stopped
 
 volumes:

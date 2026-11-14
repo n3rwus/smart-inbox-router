@@ -11,7 +11,7 @@ services:
     command: ["python", "-m", "router.eval"]
     environment:
       ROUTER_LLM__BASE_URL: http://ollama:11434/v1
-      ROUTER_LLM__MODEL: ${LLM__MODEL:-qwen2.5:3b}
+      ROUTER_LLM__MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
       EVAL_CASES_PATH: /opt/eval/cases.json
       EVAL_REPORT_PATH: /opt/eval-out/eval-results.md
     volumes:

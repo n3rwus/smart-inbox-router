@@ -4,23 +4,24 @@ from common.departments import Department
 
 DEPARTMENT_DESCRIPTIONS: Mapping[Department, str] = {
     Department.PERSONNEL: (
-        "personnel administration: employment contracts, annexes, leave requests, "
-        "sick leave (L4, zwolnienie lekarskie), payroll and salary, employment certificates "
-        "(umowa, urlop, wynagrodzenie, zaświadczenie)."
+        "employment paperwork and administration: leave and vacation, sick leave, "
+        "pay and payslip, contracts and annexes, employment certificates; "
+        "PL: urlop, L4, wynagrodzenie, umowa, zaświadczenie."
     ),
     Department.HUMAN_RESOURCES: (
-        "people and development: recruitment, onboarding, training, benefits "
-        "(e.g. sports card, medical care), workplace conflicts, feedback "
-        "(rekrutacja, szkolenia, benefity, konflikt)."
+        "people and development: recruitment and referrals, onboarding, training, "
+        "benefits, workplace conflicts and feedback; "
+        "PL: rekrutacja, szkolenie, benefit, konflikt."
     ),
     Department.HELP_DESK: (
-        "end-user support: forgotten password, locked account, my laptop/printer/monitor "
-        "does not work, email client problems (hasło, konto, drukarka, nie działa)."
+        "end-user support when one person has a problem with their own device, "
+        "account or password: laptop, monitor, printer, mail client, forgotten "
+        "password, locked account; PL: hasło, konto, drukarka, nie działa."
     ),
     Department.IT: (
-        "systems and infrastructure: access to systems and repositories, network and VPN, "
-        "servers, new hardware purchase, security incidents "
-        "(dostęp, VPN, serwer, zakup sprzętu, bezpieczeństwo)."
+        "systems, infrastructure and access rights: accounts and repository "
+        "access, network and VPN, servers, hardware purchases, security "
+        "incidents; PL: dostęp, VPN, serwer, zakup sprzętu, bezpieczeństwo."
     ),
     Department.OTHER: "anything that does not clearly fit the above.",
 }

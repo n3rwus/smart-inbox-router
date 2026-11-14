@@ -62,6 +62,18 @@ root_packages = ["router", "notifier", "common"]
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
+name = "Router and notifier must stay independent"
+type = "forbidden"
+source_modules = ["router"]
+forbidden_modules = ["notifier"]
+
+[[tool.importlinter.contracts]]
+name = "Notifier must not depend on router"
+type = "forbidden"
+source_modules = ["notifier"]
+forbidden_modules = ["router"]
+
+[[tool.importlinter.contracts]]
 name = "Router core must not depend on infrastructure"
 type = "forbidden"
 source_modules = ["router.domain", "router.application"]

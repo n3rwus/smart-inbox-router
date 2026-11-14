@@ -34,14 +34,53 @@ def _deps(notifier: FakeNotifier) -> RoutingDeps:
     )
 
 
-def test_tool_schema_exposes_only_department_property() -> None:
-    adapter = build_routing_agent(TestModel(call_tools=[TOOL_NAME]))
-    agent = adapter._agent  # type: ignore[attr-defined]
-    schema = agent._function_toolset.tools[TOOL_NAME].function_schema.json_schema  # type: ignore[attr-defined]
+def _response_tool(department: str) -> ModelResponse:
+    return ModelResponse(parts=[ToolCallPart(tool_name=TOOL_NAME, args={"department": department})])
 
+
+def _response_text(text: str) -> ModelResponse:
+    return ModelResponse(parts=[TextPart(text)])
+
+
+def _last_has_tool_return(messages: list[ModelMessage]) -> bool:
+    last = messages[-1]
+    return any(isinstance(part, ToolReturnPart) for part in getattr(last, "parts", []))
+
+
+async def test_tool_schema_exposes_only_department_property() -> None:
+    captured: dict[str, object] = {}
+
+    def fn(_messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        captured["tools"] = list(info.function_tools)
+        return _response_text("done")
+
+    await build_routing_agent(FunctionModel(fn)).run(_deps(FakeNotifier()))
+
+    tools = captured["tools"]
+    assert isinstance(tools, list) and len(tools) == 1
+    tool = tools[0]
+    assert tool.name == TOOL_NAME
+    schema = tool.parameters_json_schema
     assert set(schema["properties"]) == {"department"}
     enum_ref = schema["properties"]["department"]["$ref"].split("/")[-1]
     assert set(schema["$defs"][enum_ref]["enum"]) == {d.value for d in Department}
+
+
+async def test_model_never_sees_sender_email() -> None:
+    captured: list[list[ModelMessage]] = []
+
+    def fn(messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
+        captured.append(messages)
+        return _response_text("done")
+
+    await build_routing_agent(FunctionModel(fn)).run(_deps(FakeNotifier()))
+
+    for history in captured:
+        for message in history:
+            for part in getattr(message, "parts", []):
+                text = getattr(part, "content", None)
+                if isinstance(text, str):
+                    assert "alice@example.com" not in text
 
 
 async def test_test_model_runs_tool_once_with_deps() -> None:
@@ -57,19 +96,6 @@ async def test_test_model_runs_tool_once_with_deps() -> None:
     assert call.body == deps.body
     assert call.message_id == deps.message_id
     assert deps.sent_to is not None
-
-
-def _response_tool(department: str) -> ModelResponse:
-    return ModelResponse(parts=[ToolCallPart(tool_name=TOOL_NAME, args={"department": department})])
-
-
-def _response_text(text: str) -> ModelResponse:
-    return ModelResponse(parts=[TextPart(text)])
-
-
-def _last_has_tool_return(messages: list[ModelMessage]) -> bool:
-    last = messages[-1]
-    return any(isinstance(part, ToolReturnPart) for part in getattr(last, "parts", []))
 
 
 async def test_function_model_routes_to_it() -> None:

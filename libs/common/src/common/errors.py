@@ -6,6 +6,7 @@ class ErrorCode(StrEnum):
     LLM_UNAVAILABLE = "llm_unavailable"
     ROUTING_FAILED = "routing_failed"
     DELIVERY_FAILED = "delivery_failed"
+    DELIVERY_REJECTED = "delivery_rejected"
     MESSAGE_NOT_FOUND = "message_not_found"
     UPSTREAM_TIMEOUT = "upstream_timeout"
     IDEMPOTENCY_CONFLICT = "idempotency_conflict"

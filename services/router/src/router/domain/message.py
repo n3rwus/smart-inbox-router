@@ -18,6 +18,10 @@ class InvalidMessageStateError(AppError):
     code = ErrorCode.INTERNAL_ERROR
 
 
+class MessageNotFoundError(AppError):
+    code = ErrorCode.MESSAGE_NOT_FOUND
+
+
 def _utcnow() -> datetime:
     return datetime.now(UTC)
 

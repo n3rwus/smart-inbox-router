@@ -4,13 +4,9 @@ from datetime import datetime
 from uuid import UUID
 
 from common.departments import Department
-from common.errors import AppError, ErrorCode
+from common.errors import ErrorCode
 
-from router.domain.message import Message, MessageStatus
-
-
-class MessageNotFoundError(AppError):
-    code = ErrorCode.MESSAGE_NOT_FOUND
+from router.domain.message import Message, MessageNotFoundError, MessageStatus
 
 
 class InMemoryMessageRepository:

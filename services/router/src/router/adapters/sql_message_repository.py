@@ -3,16 +3,17 @@ from typing import cast
 from uuid import UUID
 
 from common.departments import Department
-from common.errors import AppError, ErrorCode
+from common.errors import ErrorCode
 from sqlalchemy import CursorResult, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from router.adapters.db.message_row import MessageRow
-from router.domain.message import InvalidMessageStateError, Message, MessageStatus
-
-
-class MessageNotFoundError(AppError):
-    code = ErrorCode.MESSAGE_NOT_FOUND
+from router.domain.message import (
+    InvalidMessageStateError,
+    Message,
+    MessageNotFoundError,
+    MessageStatus,
+)
 
 
 def _as_naive_utc(value: datetime) -> datetime:

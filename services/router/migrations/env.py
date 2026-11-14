@@ -1,5 +1,4 @@
 import asyncio
-from logging.config import fileConfig
 
 import router.adapters.db  # noqa: F401 -- registers MessageRow with Base.metadata
 from alembic import context
@@ -9,10 +8,6 @@ from router.config import RouterSettings
 from sqlalchemy.engine import Connection
 
 config = context.config
-
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-
 target_metadata = Base.metadata
 
 

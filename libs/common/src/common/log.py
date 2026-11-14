@@ -7,7 +7,15 @@ from typing import Any
 correlation_id: ContextVar[str | None] = ContextVar("correlation_id", default=None)
 
 ALLOWED_LOG_FIELDS: frozenset[str] = frozenset(
-    {"message_id", "department", "outcome", "duration_ms", "status_code"}
+    {
+        "message_id",
+        "department",
+        "outcome",
+        "duration_ms",
+        "status_code",
+        "fallback_used",
+        "attempt",
+    }
 )
 
 _TEXT_FORMAT = (

@@ -37,3 +37,7 @@ class IdempotencyConflictError(AppError):
 
 class NotReadyError(AppError):
     code = ErrorCode.NOT_READY
+
+
+class LlmUnavailableError(AppError):
+    code = ErrorCode.LLM_UNAVAILABLE

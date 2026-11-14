@@ -1,11 +1,12 @@
 import asyncio
 
-import router.adapters.db  # noqa: F401 -- registers MessageRow with Base.metadata
 from alembic import context
 from common.db import create_engine
+from sqlalchemy.engine import Connection
+
+import router.adapters.db  # noqa: F401 -- registers MessageRow with Base.metadata
 from router.adapters.db import Base
 from router.config import RouterSettings
-from sqlalchemy.engine import Connection
 
 config = context.config
 target_metadata = Base.metadata

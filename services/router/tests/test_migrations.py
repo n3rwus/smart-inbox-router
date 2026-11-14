@@ -3,20 +3,12 @@ from pathlib import Path
 
 from alembic import command
 from alembic.autogenerate import compare_metadata
-from alembic.config import Config
 from alembic.migration import MigrationContext
 from common.db import create_engine
 from router.adapters.db import Base
+from router.migrate import build_config
 from sqlalchemy import inspect
 from sqlalchemy.engine import Connection
-
-ALEMBIC_INI = Path(__file__).resolve().parents[1] / "alembic.ini"
-
-
-def _config(url: str) -> Config:
-    cfg = Config(str(ALEMBIC_INI))
-    cfg.set_main_option("sqlalchemy.url", url)
-    return cfg
 
 
 def _url(tmp_path: Path) -> str:
@@ -25,7 +17,7 @@ def _url(tmp_path: Path) -> str:
 
 def test_alembic_upgrade_creates_messages_table(tmp_path: Path) -> None:
     url = _url(tmp_path)
-    command.upgrade(_config(url), "head")
+    command.upgrade(build_config(url), "head")
 
     engine = create_engine(url)
 
@@ -54,7 +46,7 @@ def test_alembic_upgrade_creates_messages_table(tmp_path: Path) -> None:
 
 def test_migrations_match_model_metadata(tmp_path: Path) -> None:
     url = _url(tmp_path)
-    command.upgrade(_config(url), "head")
+    command.upgrade(build_config(url), "head")
 
     engine = create_engine(url)
 

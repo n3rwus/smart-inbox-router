@@ -1,24 +1,23 @@
 """Entrypoint for `python -m router.migrate` — runs `alembic upgrade head`."""
 
-from pathlib import Path
-
 from alembic import command
 from alembic.config import Config
 
-ALEMBIC_INI_ENV = "ROUTER_ALEMBIC_INI"
+from router.config import RouterSettings
+
+MIGRATIONS_LOCATION = "router:migrations"
 
 
-def _config() -> Config:
-    import os
-
-    override = os.environ.get(ALEMBIC_INI_ENV)
-    if override:
-        return Config(override)
-    return Config(str(Path(__file__).resolve().parents[2] / "alembic.ini"))
+def build_config(database_url: str) -> Config:
+    cfg = Config()
+    cfg.set_main_option("script_location", MIGRATIONS_LOCATION)
+    cfg.set_main_option("sqlalchemy.url", database_url)
+    return cfg
 
 
 def main() -> None:
-    command.upgrade(_config(), "head")
+    settings = RouterSettings()
+    command.upgrade(build_config(settings.database_url), "head")
 
 
 if __name__ == "__main__":

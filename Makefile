@@ -4,7 +4,7 @@ TRIVY = docker run --rm -v "$(CURDIR):/src" -v trivy-cache:/root/.cache/trivy -w
 	aquasec/trivy:$(TRIVY_VERSION)
 TRIVY_FLAGS = --severity HIGH,CRITICAL --exit-code 1 --skip-version-check
 
-.PHONY: sync lint fmt test test-integration check hooks smoke \
+.PHONY: sync lint fmt test test-integration check hooks smoke eval \
 	up down ps logs clean \
 	images image-check \
 	security sec-secrets sec-deps sec-config sec-images \
@@ -21,6 +21,9 @@ test-integration:
 check: ; uv run pre-commit run --all-files
 hooks: ; uv run pre-commit install
 smoke: ; ./scripts/smoke_test.sh
+eval:
+	docker compose -f docker-compose.yml -f docker-compose.eval.yml --profile eval \
+		run --rm --build eval
 
 # --- Docker Compose ---
 up:    ; docker compose up -d

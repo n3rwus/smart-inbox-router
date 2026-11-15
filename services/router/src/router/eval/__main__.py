@@ -37,9 +37,6 @@ UNROUTED = "<unrouted>"
 
 
 class SilentNotifier:
-    def __init__(self) -> None:
-        self.calls: list[tuple[UUID, Department]] = []
-
     async def notify(
         self,
         *,
@@ -48,7 +45,6 @@ class SilentNotifier:
         sender_email: str,
         body: str,
     ) -> DeliveryResult:
-        self.calls.append((message_id, department))
         return DeliveryResult.SENT
 
 

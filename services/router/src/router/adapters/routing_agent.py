@@ -121,7 +121,7 @@ def build_routing_agent(
         model=model,
         system_prompt=_system_prompt(),
         deps_type=RoutingDeps,
-        model_settings=ModelSettings(temperature=0),
+        model_settings=ModelSettings(temperature=0),  # deterministic routing
     )
 
     @agent.tool(name=TOOL_NAME)

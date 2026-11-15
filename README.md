@@ -300,7 +300,8 @@ sequenceDiagram
     AG->>AN: PUT /api/v1/notifications/{id} (department, sender, message)
     AN->>DL: deliver(Notification, sender=SmtpClient, log, from_address)
     DL->>DL: content_hash(notification)
-    DL->>LG: DeliveryLog.lock(id); DeliveryLog.stored_hash(id)
+    DL->>LG: DeliveryLog.lock(id)
+    DL->>LG: DeliveryLog.stored_hash(id)
     alt new id, no stored hash
         DL->>EM: build_email(message_id, department, sender, message, from_address)
         EM->>RC: recipient_for(department)
@@ -680,8 +681,7 @@ Alternatives considered: `${VAR:-default}` everywhere, or a per-env
 service wiring; a separate compose overlay belongs to a real
 multi-env setup, not a PoC.
 
-Trade-off: changing wiring means editing the compose file, not
-`.env.example`.
+Trade-off: changing wiring means editing the compose file.
 
 When I'd revisit: more than one deployment target. Then overrides go
 in a compose overlay, not into interpolation.

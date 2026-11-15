@@ -19,13 +19,12 @@ from pydantic_ai.messages import (
     ToolReturnPart,
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
-from router.adapters.in_memory_message_repository import InMemoryMessageRepository
 from router.adapters.routing_agent import TOOL_NAME, build_routing_agent
 from router.application.worker import process_next
 from router.domain.message import Message
 from router.ports.routing_agent import RoutingDeps, RunStats
 
-from .fakes import FakeNotifier
+from .fakes import FakeNotifier, InMemoryMessageRepository
 
 NOW = datetime(2026, 11, 14, 12, 0, tzinfo=UTC)
 SENDER = "very-unique-sender-xyz@example.com"

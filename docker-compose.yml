@@ -1,0 +1,194 @@
+
+name: smart-inbox-router
+
+# Shared build context for every router image. Compose dedupes identical
+# `build:` sections under the same tag and builds the image exactly once on
+# `docker compose up -d` — no `--build` needed on a clean host.
+x-router-build: &router-build
+  context: .
+  args:
+    SERVICE: router
+
+services:
+  ollama:
+    image: ollama/ollama:0.40.15
+    volumes:
+      - ollama-models:/root/.ollama
+    networks: [llm-net, egress]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+    # No published ports: Ollama has no authentication, so it must not be exposed to the host.
+
+  ollama-init:
+    image: ollama/ollama:0.40.15
+    environment:
+      OLLAMA_HOST: ollama:11434
+    entrypoint: ["ollama", "pull", "${OLLAMA_MODEL:-qwen2.5:3b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks: [llm-net]
+    restart: "no"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    platform: linux/amd64
+    # No ARM image is available; Apple Silicon runs this image through emulation.
+    ports:
+      - "127.0.0.1:8025:8025"
+    # Only the web UI is published, on loopback, since MailHog has no auth.
+    # SMTP 1025 stays internal; services reach it via the mail-net network.
+    networks: [mail-net, edge]
+    restart: unless-stopped
+
+  notifier:
+    build:
+      context: .
+      args:
+        SERVICE: notifier
+    image: sir/notifier:dev
+    command: ["python", "-m", "notifier"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NOTIFIER_HTTP__HOST: 0.0.0.0
+      NOTIFIER_HTTP__PORT: 8000
+      # SMTP targets the compose mailhog service; interpolation would let the
+      # host .env (which carries localhost for `uv run notifier`) leak in here.
+      NOTIFIER_SMTP__HOST: mailhog
+      NOTIFIER_SMTP__PORT: 1025
+      NOTIFIER_SMTP__START_TLS: "false"
+    networks: [mail-net, notify-net]
+    depends_on: [mailhog]
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, urllib.request, sys
+          port = os.environ.get("NOTIFIER_HTTP__PORT", "8000")
+          with urllib.request.urlopen(f"http://127.0.0.1:{port}/ready", timeout=2) as r:
+              sys.exit(0 if r.status == 200 else 1)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    # No published ports: notifier is internal; only the router calls it over notify-net.
+
+  router-migrate:
+    build: *router-build
+    image: sir/router:dev
+    command: ["migrate"]
+    environment:
+      ROUTER_DATABASE_URL: sqlite+aiosqlite:////data/router.db
+    volumes:
+      - router-data:/data
+    restart: "no"
+    # One-shot: runs alembic upgrade head against the shared SQLite file, then exits.
+
+  router-api:
+    build: *router-build
+    image: sir/router:dev
+    command: ["api"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ROUTER_HTTP__HOST: 0.0.0.0
+      ROUTER_HTTP__PORT: 8000
+      ROUTER_DATABASE_URL: sqlite+aiosqlite:////data/router.db
+    volumes:
+      - router-data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [edge]
+    depends_on:
+      router-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, urllib.request, sys
+          port = os.environ.get("ROUTER_HTTP__PORT", "8000")
+          with urllib.request.urlopen(f"http://127.0.0.1:{port}/ready", timeout=2) as r:
+              sys.exit(0 if r.status == 200 else 1)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  router-agent:
+    build: *router-build
+    image: sir/router:dev
+    command: ["agent"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ROUTER_DATABASE_URL: sqlite+aiosqlite:////data/router.db
+      ROUTER_NOTIFIER__BASE_URL: http://notifier:8000
+      ROUTER_LLM__BASE_URL: http://ollama:11434/v1
+      # Keep the agent and the ollama pre-pull on the exact same model.
+      ROUTER_LLM__MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      ROUTER_LLM__TIMEOUT_SECONDS: ${ROUTER_LLM__TIMEOUT_SECONDS:-120}
+      ROUTER_WORKER__HEARTBEAT_PATH: /data/router-agent.alive
+    volumes:
+      - router-data:/data
+    networks: [notify-net, llm-net]
+    depends_on:
+      router-migrate:
+        condition: service_completed_successfully
+      notifier:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, sys, time
+          path = os.environ.get("ROUTER_WORKER__HEARTBEAT_PATH", "/data/router-agent.alive")
+          if not os.path.exists(path):
+              sys.exit(1)
+          sys.exit(0 if time.time() - os.path.getmtime(path) < 30 else 1)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    # Grace period must cover a full LLM call so an in-flight message finishes
+    # before SIGKILL; worker also exits cleanly on SIGTERM (asyncio.Event).
+    stop_grace_period: 130s
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
+  router-data:
+
+networks:
+  edge: {}
+  # Network for services exposing ports to the host.
+  egress: {}
+  # Network providing outbound internet access.
+  llm-net:
+    internal: true
+  # Isolated network for LLM services.
+  mail-net:
+    internal: true
+  # Isolated network for mail services.
+  notify-net:
+    internal: true
+  # Isolated network for router → notifier traffic.

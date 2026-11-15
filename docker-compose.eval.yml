@@ -1,0 +1,26 @@
+name: smart-inbox-router
+
+services:
+  eval:
+    image: sir/router:dev
+    profiles: [eval]
+    build:
+      context: .
+      args:
+        SERVICE: router
+    command: ["python", "-m", "router.eval"]
+    environment:
+      ROUTER_LLM__BASE_URL: http://ollama:11434/v1
+      ROUTER_LLM__MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
+      EVAL_CASES_PATH: /opt/eval/cases.json
+      EVAL_REPORT_PATH: /opt/eval-out/eval-latest-run.md
+    volumes:
+      - ./services/router/tests/eval:/opt/eval:ro
+      - ./docs:/opt/eval-out:rw
+    networks: [llm-net]
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    restart: "no"

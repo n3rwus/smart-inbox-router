@@ -1,0 +1,28 @@
+[project]
+name = "router"
+version = "0.1.0"
+description = "Smart Inbox Router — API and agent that classify inbound email and delegate delivery to the notifier service."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "n3rwus", email = "mnerwinski@outlook.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.1",
+    "common",
+    "fastapi>=0.162.2",
+    "pydantic-ai-slim[openai]>=2.66.0",
+    "pydantic[email]>=2.14.3",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+router = "router.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.9.14,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+common = { workspace = true }

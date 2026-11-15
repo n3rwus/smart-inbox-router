@@ -1,0 +1,1 @@
+"""Notifier: warstwa domain."""

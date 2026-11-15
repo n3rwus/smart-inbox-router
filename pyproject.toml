@@ -1,0 +1,122 @@
+[tool.uv.workspace]
+members = ["libs/common", "services/router", "services/notifier"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "respx",
+    "aiosmtpd",
+    "ruff",
+    "mypy",
+    "import-linter",
+    "pyyaml",
+    "pre-commit",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "S", "SIM", "RUF"]
+per-file-ignores = { "**/tests/**" = ["S101"] }
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["libs/common/src", "services/router/src", "services/notifier/src"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "libs/common/tests",
+    "services/router/tests",
+    "services/notifier/tests",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--import-mode=importlib -m 'not integration'"
+markers = [
+    "integration: tests that require running infrastructure (docker compose)",
+]
+
+[tool.coverage.run]
+source = ["common", "router", "notifier"]
+branch = true
+omit = [
+  "*/__main__.py",
+  "*/main.py",
+  "*/migrate.py",
+  "*/migrations/*",
+  "*/eval/*",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_empty = true
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
+]
+
+[tool.importlinter]
+root_packages = ["router", "notifier", "common"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Router and notifier must stay independent"
+type = "forbidden"
+source_modules = ["router"]
+forbidden_modules = ["notifier"]
+
+[[tool.importlinter.contracts]]
+name = "Notifier must not depend on router"
+type = "forbidden"
+source_modules = ["notifier"]
+forbidden_modules = ["router"]
+
+[[tool.importlinter.contracts]]
+name = "Router core must not depend on infrastructure"
+type = "forbidden"
+source_modules = ["router.domain", "router.application"]
+forbidden_modules = [
+    "router.adapters",
+    "fastapi",
+    "sqlalchemy",
+    "pydantic_ai",
+    "httpx",
+]
+
+[[tool.importlinter.contracts]]
+name = "Notifier core must not depend on infrastructure"
+type = "forbidden"
+source_modules = ["notifier.domain"]
+forbidden_modules = [
+    "notifier.adapters",
+    "fastapi",
+    "sqlalchemy",
+    "aiosmtplib",
+    "mcp",
+]
+
+[[tool.importlinter.contracts]]
+name = "Common domain modules must not depend on HTTP or SMTP adapters"
+type = "forbidden"
+source_modules = [
+    "common.db",
+    "common.departments",
+    "common.email_headers",
+    "common.errors",
+    "common.settings",
+    "common.timeouts",
+]
+forbidden_modules = [
+    "common.http",
+    "common.smtp",
+    "fastapi",
+    "aiosmtplib",
+]

@@ -1,0 +1,26 @@
+services:
+  integration-tests:
+    image: ghcr.io/astral-sh/uv:0.9.0-python3.12-bookworm-slim
+    profiles: [test]
+    working_dir: /src
+    volumes:
+      - .:/src
+      - integration-uv-cache:/root/.cache/uv
+      - integration-venv:/src/.venv
+    environment:
+      MAILHOG_API_URL: http://mailhog:8025/api
+      MAILHOG_SMTP_HOST: mailhog
+      MAILHOG_SMTP_PORT: "1025"
+      NOTIFIER_BASE_URL: http://notifier:${NOTIFIER_HTTP__PORT:-8000}
+    entrypoint: ["uv"]
+    command: ["run", "pytest", "-m", "integration", "--no-cov"]
+    networks: [mail-net, notify-net, egress]
+    depends_on:
+      mailhog:
+        condition: service_started
+      notifier:
+        condition: service_healthy
+
+volumes:
+  integration-uv-cache:
+  integration-venv:

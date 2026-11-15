@@ -300,7 +300,8 @@ sequenceDiagram
     AG->>AN: PUT /api/v1/notifications/{id} (department, sender, message)
     AN->>DL: deliver(Notification, sender=SmtpClient, log, from_address)
     DL->>DL: content_hash(notification)
-    DL->>LG: DeliveryLog.lock(id); DeliveryLog.stored_hash(id)
+    DL->>LG: DeliveryLog.lock(id)
+    DL->>LG: DeliveryLog.stored_hash(id)
     alt new id, no stored hash
         DL->>EM: build_email(message_id, department, sender, message, from_address)
         EM->>RC: recipient_for(department)

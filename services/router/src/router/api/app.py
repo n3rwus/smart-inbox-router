@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 from router.api.health import router as health_router
 from router.api.messages import router as messages_router
-from router.composition import install_lifespan
+from router.composition import build_lifespan
 from router.config import RouterSettings
 
 ROUTER_API_TITLE = "Smart Inbox Router"
@@ -29,10 +29,10 @@ def create_app(settings: RouterSettings | None = None) -> FastAPI:
         version=ROUTER_API_VERSION,
         docs_url=API_V1_DOCS_URL,
         openapi_url=f"{API_V1_PREFIX}/openapi.json",
+        lifespan=build_lifespan(settings),
     )
     app.add_middleware(CorrelationIdMiddleware)
     install_problem_handlers(app)
-    install_lifespan(app, settings)
     app.include_router(messages_router, prefix=API_V1_PREFIX)
     app.include_router(health_router)
     return app

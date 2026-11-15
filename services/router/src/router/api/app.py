@@ -1,3 +1,5 @@
+from importlib.metadata import version
+
 from common.http import (
     API_V1_DOCS_URL,
     API_V1_PREFIX,
@@ -12,7 +14,6 @@ from router.composition import build_lifespan
 from router.config import RouterSettings
 
 ROUTER_API_TITLE = "Smart Inbox Router"
-ROUTER_API_VERSION = "0.1.0"
 ROUTER_API_DESCRIPTION = (
     "HTTP API for the Smart Inbox Router. Accepts inbound messages and enqueues them "
     "for the agent worker, which classifies each message with a local LLM and asks "
@@ -26,7 +27,7 @@ def create_app(settings: RouterSettings | None = None) -> FastAPI:
     app = FastAPI(
         title=ROUTER_API_TITLE,
         description=ROUTER_API_DESCRIPTION,
-        version=ROUTER_API_VERSION,
+        version=version("router"),
         docs_url=API_V1_DOCS_URL,
         openapi_url=f"{API_V1_PREFIX}/openapi.json",
         lifespan=build_lifespan(settings),

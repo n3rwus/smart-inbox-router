@@ -1,7 +1,7 @@
 [project]
 name = "common"
 version = "0.1.0"
-description = "Add your description here"
+description = "Shared infrastructure for Smart Inbox Router services: settings, logging, async DB, HTTP problem+json, SMTP, OpenTelemetry."
 readme = "README.md"
 authors = [
     { name = "n3rwus", email = "mnerwinski@outlook.com" }

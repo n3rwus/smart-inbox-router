@@ -1,7 +1,7 @@
 [project]
 name = "notifier"
 version = "0.1.0"
-description = "Add your description here"
+description = "Smart Inbox Router notifier — HTTP service that delivers classified messages to department mailboxes over SMTP."
 readme = "README.md"
 authors = [
     { name = "n3rwus", email = "mnerwinski@outlook.com" }

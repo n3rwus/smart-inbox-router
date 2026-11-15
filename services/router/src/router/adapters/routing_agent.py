@@ -36,7 +36,7 @@ TIE_BREAK_RULES = (
     "conflicts. Leave requests always go to kadry. Employment documents "
     "(certificates, contracts, annexes, payslips) and anything about pay or "
     "days off go to kadry. Example: 'proszę o zaświadczenie o zatrudnieniu "
-    "do banku' → kadry (it is an employment document, not an HR topic).\n"
+    "do banku' -> kadry (it is an employment document, not an HR topic).\n"
     "- help-desk handles a problem one person has with their own device, "
     "account or password. it handles systems, infrastructure, access rights, "
     "network/VPN, purchases and security."

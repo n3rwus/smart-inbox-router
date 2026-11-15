@@ -22,7 +22,6 @@ from router.ports.routing_agent import FallbackReason, RoutingAgent, RoutingDeps
 _log = logging.getLogger(__name__)
 
 DEFAULT_REQUEST_LIMIT = 3
-DEFAULT_TIMEOUT_SECONDS = 120.0
 TOOL_NAME = "send_to_department"
 
 SYSTEM_INSTRUCTIONS_PREFIX = (
@@ -113,7 +112,7 @@ class _PydanticRoutingAgent:
 def build_routing_agent(
     model: Model,
     *,
-    timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
+    timeout_seconds: float,
     request_limit: int = DEFAULT_REQUEST_LIMIT,
     model_name: str | None = None,
 ) -> RoutingAgent:

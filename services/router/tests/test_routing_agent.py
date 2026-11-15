@@ -1,3 +1,4 @@
+from functools import partial
 from uuid import uuid4
 
 import httpx
@@ -23,6 +24,8 @@ from router.ports.notifier import DeliveryRejectedError
 from router.ports.routing_agent import RoutingDeps
 
 from .fakes import FakeNotifier
+
+_build_agent = partial(build_routing_agent, timeout_seconds=60.0)
 
 
 def _deps(notifier: FakeNotifier) -> RoutingDeps:
@@ -54,7 +57,7 @@ async def test_tool_schema_exposes_only_department_property() -> None:
         captured["tools"] = list(info.function_tools)
         return _response_text("done")
 
-    await build_routing_agent(FunctionModel(fn)).run(_deps(FakeNotifier()))
+    await _build_agent(FunctionModel(fn)).run(_deps(FakeNotifier()))
 
     tools = captured["tools"]
     assert isinstance(tools, list) and len(tools) == 1
@@ -73,7 +76,7 @@ async def test_model_never_sees_sender_email() -> None:
         captured.append(messages)
         return _response_text("done")
 
-    await build_routing_agent(FunctionModel(fn)).run(_deps(FakeNotifier()))
+    await _build_agent(FunctionModel(fn)).run(_deps(FakeNotifier()))
 
     for history in captured:
         for message in history:
@@ -85,7 +88,7 @@ async def test_model_never_sees_sender_email() -> None:
 
 async def test_test_model_runs_tool_once_with_deps() -> None:
     notifier = FakeNotifier()
-    adapter = build_routing_agent(TestModel(call_tools=[TOOL_NAME]))
+    adapter = _build_agent(TestModel(call_tools=[TOOL_NAME]))
     deps = _deps(notifier)
 
     await adapter.run(deps)
@@ -110,7 +113,7 @@ async def test_function_model_routes_to_it() -> None:
         message_id=uuid4(),
         sender_email="alice@example.com",
         body="Need VPN access",
-        agent=build_routing_agent(FunctionModel(fn)),
+        agent=_build_agent(FunctionModel(fn)),
         notifier=notifier,
     )
 
@@ -130,7 +133,7 @@ async def test_text_only_response_triggers_fallback_to_other() -> None:
         message_id=uuid4(),
         sender_email="alice@example.com",
         body="??",
-        agent=build_routing_agent(FunctionModel(fn)),
+        agent=_build_agent(FunctionModel(fn)),
         notifier=notifier,
     )
 
@@ -157,7 +160,7 @@ async def test_double_tool_call_still_sends_once() -> None:
         calls.append("first")
         return _response_tool(Department.IT.value)
 
-    adapter = build_routing_agent(FunctionModel(fn), request_limit=5)
+    adapter = _build_agent(FunctionModel(fn), request_limit=5)
     deps = _deps(notifier)
     await adapter.run(deps)
 
@@ -176,7 +179,7 @@ async def test_invalid_department_retries_then_falls_back() -> None:
         message_id=uuid4(),
         sender_email="alice@example.com",
         body="some message",
-        agent=build_routing_agent(FunctionModel(fn), request_limit=5),
+        agent=_build_agent(FunctionModel(fn), request_limit=5),
         notifier=notifier,
     )
 
@@ -192,7 +195,7 @@ async def test_connection_error_raises_llm_unavailable_without_notifying() -> No
     def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
         raise httpx.ConnectError("boom")
 
-    adapter = build_routing_agent(FunctionModel(fn))
+    adapter = _build_agent(FunctionModel(fn))
 
     with pytest.raises(LlmUnavailableError):
         await route_message(
@@ -214,7 +217,7 @@ async def test_model_connection_error_raises_llm_unavailable() -> None:
     def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
         raise ModelConnectionError("test-model", "Connection error.")
 
-    adapter = build_routing_agent(FunctionModel(fn))
+    adapter = _build_agent(FunctionModel(fn))
 
     with pytest.raises(LlmUnavailableError):
         await route_message(
@@ -248,7 +251,7 @@ async def test_notifier_error_in_tool_propagates_without_fallback(
     def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
         return _response_tool(Department.IT.value)
 
-    adapter = build_routing_agent(FunctionModel(fn))
+    adapter = _build_agent(FunctionModel(fn))
     deps = _deps(notifier)
 
     with pytest.raises(error_cls):
@@ -276,7 +279,7 @@ async def test_route_message_does_not_fallback_when_notifier_errors(
             message_id=uuid4(),
             sender_email="alice@example.com",
             body="hi",
-            agent=build_routing_agent(FunctionModel(fn)),
+            agent=_build_agent(FunctionModel(fn)),
             notifier=notifier,
         )
 

@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from functools import partial
 from uuid import UUID, uuid4
 
 import pytest
@@ -25,6 +26,8 @@ from router.domain.message import Message
 from router.ports.routing_agent import RoutingDeps, RunStats
 
 from .fakes import FakeNotifier, InMemoryMessageRepository
+
+_build_agent = partial(build_routing_agent, timeout_seconds=60.0)
 
 NOW = datetime(2026, 11, 14, 12, 0, tzinfo=UTC)
 SENDER = "very-unique-sender-xyz@example.com"
@@ -90,7 +93,7 @@ async def test_process_next_sets_correlation_id_and_restores(
             return _response_text("done")
         return _response_tool(Department.IT.value)
 
-    agent = build_routing_agent(FunctionModel(fn), model_name="qwen2.5:3b")
+    agent = _build_agent(FunctionModel(fn), model_name="qwen2.5:3b")
     notifier = FakeNotifier()
 
     outer = correlation_id.set("outside")
@@ -220,7 +223,7 @@ async def test_routing_fallback_used_logged_on_text_only_response(
     caplog.set_level(logging.INFO)
     await process_next(
         repository=repo,
-        agent=build_routing_agent(FunctionModel(fn), model_name="qwen2.5:3b"),
+        agent=_build_agent(FunctionModel(fn), model_name="qwen2.5:3b"),
         notifier=FakeNotifier(),
         clock=_clock(),
         max_attempts=MAX_ATTEMPTS,
@@ -248,7 +251,7 @@ async def test_routing_tool_called_logged(caplog: pytest.LogCaptureFixture) -> N
     caplog.set_level(logging.INFO)
     await process_next(
         repository=repo,
-        agent=build_routing_agent(FunctionModel(fn), model_name="m"),
+        agent=_build_agent(FunctionModel(fn), model_name="m"),
         notifier=FakeNotifier(),
         clock=_clock(),
         max_attempts=MAX_ATTEMPTS,
@@ -372,7 +375,7 @@ async def test_log_payloads_do_not_leak_sender_or_body(
     caplog.set_level(logging.DEBUG)
     await process_next(
         repository=repo,
-        agent=build_routing_agent(FunctionModel(fn), model_name="m"),
+        agent=_build_agent(FunctionModel(fn), model_name="m"),
         notifier=FakeNotifier(),
         clock=_clock(),
         max_attempts=MAX_ATTEMPTS,

@@ -3,7 +3,8 @@ name: smart-inbox-router
 
 # Shared build context for every router image. Compose dedupes identical
 # `build:` sections under the same tag and builds the image exactly once on
-# `docker compose up -d` — no `--build` needed on a clean host.
+# `docker compose up -d`. `pull_policy: build` on each local-image service
+# skips the registry lookup for `sir/*:dev` tags that only exist locally.
 x-router-build: &router-build
   context: .
   args:
@@ -32,7 +33,7 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-    networks: [llm-net]
+    networks: [llm-net, egress]
     restart: "no"
 
   mailhog:
@@ -52,6 +53,7 @@ services:
       args:
         SERVICE: notifier
     image: sir/notifier:dev
+    pull_policy: build
     command: ["python", "-m", "notifier"]
     env_file:
       - path: .env
@@ -86,6 +88,7 @@ services:
   router-migrate:
     build: *router-build
     image: sir/router:dev
+    pull_policy: build
     command: ["migrate"]
     environment:
       ROUTER_DATABASE_URL: sqlite+aiosqlite:////data/router.db
@@ -97,6 +100,7 @@ services:
   router-api:
     build: *router-build
     image: sir/router:dev
+    pull_policy: build
     command: ["api"]
     env_file:
       - path: .env
@@ -132,6 +136,7 @@ services:
   router-agent:
     build: *router-build
     image: sir/router:dev
+    pull_policy: build
     command: ["agent"]
     env_file:
       - path: .env

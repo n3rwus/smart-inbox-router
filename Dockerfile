@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-ARG PYTHON_IMAGE=python:3.12-slim
+ARG PYTHON_IMAGE=python:3.12.16-slim-bookworm
 ARG UV_VERSION=0.9.0
 
 # ---------- uv: binary source only ----------

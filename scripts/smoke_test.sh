@@ -43,4 +43,4 @@ echo "message routed: ${LAST_BODY}"
 echo "checking MailHog for one matching mail"
 MAIL_RESPONSE=$(curl -fsS "${MAILHOG}/api/v2/search?kind=containing&query=${MESSAGE_ID}")
 MAIL_PAYLOAD="${MAIL_RESPONSE}" MAIL_MESSAGE_ID="${MESSAGE_ID}" MAIL_SENDER="${SENDER}" \
-  python3 "$(dirname "$0")/_smoke_check_mail.py"
+  python3 "$(dirname "$0")/smoke_check_mail.py"

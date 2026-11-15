@@ -1,8 +1,9 @@
 [project]
 name = "common"
 version = "0.1.0"
-description = "Add your description here"
+description = "Shared infrastructure for Smart Inbox Router services: settings, logging, async DB, HTTP problem+json, SMTP, OpenTelemetry."
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "n3rwus", email = "mnerwinski@outlook.com" }
 ]
@@ -20,9 +21,6 @@ dependencies = [
     "pydantic-settings>=2.16.2",
     "sqlalchemy[asyncio]>=2.1.8",
 ]
-
-[project.scripts]
-common = "common:main"
 
 [build-system]
 requires = ["uv_build>=0.9.14,<0.10.0"]

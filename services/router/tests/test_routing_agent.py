@@ -106,7 +106,7 @@ async def test_function_model_routes_to_it() -> None:
             return _response_text("done")
         return _response_tool(Department.IT.value)
 
-    department, fallback = await route_message(
+    department, fallback, _stats = await route_message(
         message_id=uuid4(),
         sender_email="alice@example.com",
         body="Need VPN access",
@@ -126,7 +126,7 @@ async def test_text_only_response_triggers_fallback_to_other() -> None:
     def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
         return _response_text("I don't know which department this is.")
 
-    department, fallback = await route_message(
+    department, fallback, _stats = await route_message(
         message_id=uuid4(),
         sender_email="alice@example.com",
         body="??",
@@ -172,7 +172,7 @@ async def test_invalid_department_retries_then_falls_back() -> None:
     def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
         return _response_tool("legal")
 
-    department, fallback = await route_message(
+    department, fallback, _stats = await route_message(
         message_id=uuid4(),
         sender_email="alice@example.com",
         body="some message",

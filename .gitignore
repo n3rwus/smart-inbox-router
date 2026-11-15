@@ -268,3 +268,6 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,macos,windows,python
 CLAUDE.md
+
+# Reports written by `make eval` and ad-hoc runs
+.reports/

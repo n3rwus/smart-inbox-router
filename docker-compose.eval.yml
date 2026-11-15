@@ -16,7 +16,7 @@ services:
       EVAL_REPORT_PATH: /opt/eval-out/eval-latest-run.md
     volumes:
       - ./services/router/tests/eval:/opt/eval:ro
-      - ./docs:/opt/eval-out:rw
+      - ./.reports:/opt/eval-out:rw
     networks: [llm-net]
     depends_on:
       ollama:

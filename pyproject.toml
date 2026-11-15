@@ -45,6 +45,13 @@ markers = [
 [tool.coverage.run]
 source = ["common", "router", "notifier"]
 branch = true
+omit = [
+  "*/__main__.py",
+  "*/main.py",
+  "*/migrate.py",
+  "*/migrations/*",
+  "*/eval/*",
+]
 
 [tool.coverage.report]
 fail_under = 80

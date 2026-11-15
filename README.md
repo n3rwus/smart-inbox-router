@@ -588,7 +588,17 @@ picking a better model.
 
 Context: Polish `kadry` (employment paperwork) and `human-resources`
 (people and development) overlap, and so do `help-desk` and `it`. A
-3B model picks the wrong one on ambiguous cases.
+3B model picks the wrong one on ambiguous cases. The split used here:
+
+* `kadry`: formalities — leave, sick leave, certificates (e.g.
+  *zaświadczenie o zatrudnieniu*), contracts, payslips.
+* `human-resources`: people and development — recruitment, training,
+  career paths, conflicts.
+
+An employment certificate is a `kadry` topic even though English
+"human resources" would also cover it; the prompt carries a concrete
+`zaświadczenie` example to anchor the small model. Results still vary
+between runs — do not expect 100% hit rate on a 3B model.
 
 Decision: the system prompt is built from
 `DEPARTMENT_DESCRIPTIONS` plus a static `TIE_BREAK_RULES` string in

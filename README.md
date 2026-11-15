@@ -681,8 +681,7 @@ Alternatives considered: `${VAR:-default}` everywhere, or a per-env
 service wiring; a separate compose overlay belongs to a real
 multi-env setup, not a PoC.
 
-Trade-off: changing wiring means editing the compose file, not
-`.env.example`.
+Trade-off: changing wiring means editing the compose file.
 
 When I'd revisit: more than one deployment target. Then overrides go
 in a compose overlay, not into interpolation.

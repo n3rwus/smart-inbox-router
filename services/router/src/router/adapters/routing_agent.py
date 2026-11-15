@@ -4,7 +4,7 @@ from common.errors import LlmUnavailableError, UpstreamTimeoutError
 from common.timeouts import with_timeout
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.exceptions import (
-    ModelHTTPError,
+    ModelAPIError,
     UnexpectedModelBehavior,
     UsageLimitExceeded,
 )
@@ -75,7 +75,7 @@ class _PydanticRoutingAgent:
             )
         except UpstreamTimeoutError:
             raise
-        except (ModelHTTPError, httpx.RequestError) as exc:
+        except (ModelAPIError, httpx.RequestError) as exc:
             raise LlmUnavailableError(f"LLM request failed: {exc}") from exc
         except (UsageLimitExceeded, UnexpectedModelBehavior):
             return

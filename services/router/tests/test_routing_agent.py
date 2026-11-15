@@ -206,6 +206,28 @@ async def test_connection_error_raises_llm_unavailable_without_notifying() -> No
     assert notifier.calls == []
 
 
+async def test_model_connection_error_raises_llm_unavailable() -> None:
+    from pydantic_ai.exceptions import ModelConnectionError
+
+    notifier = FakeNotifier()
+
+    def fn(_messages: list[ModelMessage], _info: AgentInfo) -> ModelResponse:
+        raise ModelConnectionError("test-model", "Connection error.")
+
+    adapter = build_routing_agent(FunctionModel(fn))
+
+    with pytest.raises(LlmUnavailableError):
+        await route_message(
+            message_id=uuid4(),
+            sender_email="alice@example.com",
+            body="hi",
+            agent=adapter,
+            notifier=notifier,
+        )
+
+    assert notifier.calls == []
+
+
 NOTIFIER_ERRORS = [
     ("delivery_failed", DeliveryFailedError, "boom"),
     ("delivery_rejected", DeliveryRejectedError, "nope"),

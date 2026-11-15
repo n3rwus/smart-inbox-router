@@ -14,6 +14,7 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: ["--maxkb=500"]
+        exclude: '^uv\.lock$'
         stages: [pre-commit]
       - id: detect-private-key
 

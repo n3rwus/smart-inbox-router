@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 # ponytail: unbounded per-message lock dict; PoC accepts the growth.
-# Upgrade path: SQL-backed DeliveryLog behind the same port (see D-009).
+# Upgrade path: SQL-backed DeliveryLog behind the same port.
 
 
 class InMemoryDeliveryLog:

@@ -9,10 +9,11 @@ from common.db import create_engine, create_session_factory
 from common.departments import Department
 from common.errors import ErrorCode
 from router.adapters.db import Base
-from router.adapters.in_memory_message_repository import InMemoryMessageRepository
 from router.adapters.sql_message_repository import SqlMessageRepository
 from router.domain.message import Message, MessageStatus
 from router.ports.message_repository import MessageRepository
+
+from .fakes import InMemoryMessageRepository
 
 RepoFactory = Callable[[], Awaitable[MessageRepository]]
 

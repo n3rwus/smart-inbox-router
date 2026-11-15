@@ -10,7 +10,6 @@ from common.errors import (
     LlmUnavailableError,
     UpstreamTimeoutError,
 )
-from router.adapters.in_memory_message_repository import InMemoryMessageRepository
 from router.agent_runner import exponential_backoff, run_worker
 from router.application.worker import process_next
 from router.config import RouterSettings
@@ -18,7 +17,7 @@ from router.domain.message import Message, MessageStatus
 from router.ports.notifier import DeliveryRejectedError
 from router.ports.routing_agent import RoutingDeps, RunStats
 
-from .fakes import FakeNotifier
+from .fakes import FakeNotifier, InMemoryMessageRepository
 
 
 def _stats() -> RunStats:

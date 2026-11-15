@@ -6,13 +6,14 @@ from common.http import PROBLEM_JSON_MEDIA_TYPE
 from fastapi import status
 from fastapi.testclient import TestClient
 from router.adapters.db import Base, MessageRow
-from router.adapters.in_memory_message_repository import InMemoryMessageRepository
 from router.adapters.sql_message_repository import SqlMessageRepository
 from router.api.app import create_app
 from router.api.messages import MESSAGE_MAX_LENGTH
 from router.config import RouterSettings
 from router.domain.message import MessageStatus
 from sqlalchemy import select
+
+from .fakes import InMemoryMessageRepository
 
 MESSAGES_URL = "/api/v1/messages"
 

@@ -12,7 +12,6 @@ DEFAULT_NOTIFIER_MAX_RETRIES = 3
 DEFAULT_LLM_BASE_URL = "http://ollama:11434/v1"
 DEFAULT_LLM_MODEL = "qwen2.5:3b"
 DEFAULT_LLM_TIMEOUT_SECONDS = 120.0
-DEFAULT_LLM_TEMPERATURE = 0.0
 
 DEFAULT_WORKER_POLL_INTERVAL_SECONDS = 1.0
 DEFAULT_WORKER_MAX_ATTEMPTS = 5
@@ -33,7 +32,6 @@ class LlmConfig(BaseModel):
     base_url: str = DEFAULT_LLM_BASE_URL
     model: str = DEFAULT_LLM_MODEL
     timeout_seconds: float = Field(default=DEFAULT_LLM_TIMEOUT_SECONDS, gt=0)
-    temperature: float = Field(default=DEFAULT_LLM_TEMPERATURE, ge=0)
 
 
 class WorkerConfig(BaseModel):

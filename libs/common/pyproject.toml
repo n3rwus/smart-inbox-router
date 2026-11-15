@@ -3,6 +3,7 @@ name = "common"
 version = "0.1.0"
 description = "Shared infrastructure for Smart Inbox Router services: settings, logging, async DB, HTTP problem+json, SMTP, OpenTelemetry."
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "n3rwus", email = "mnerwinski@outlook.com" }
 ]

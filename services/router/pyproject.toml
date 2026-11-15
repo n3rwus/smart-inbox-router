@@ -3,6 +3,7 @@ name = "router"
 version = "0.1.0"
 description = "Smart Inbox Router — API and agent that classify inbound email and delegate delivery to the notifier service."
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "n3rwus", email = "mnerwinski@outlook.com" }
 ]

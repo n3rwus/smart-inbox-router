@@ -3,6 +3,7 @@ name = "notifier"
 version = "0.1.0"
 description = "Smart Inbox Router notifier — HTTP service that delivers classified messages to department mailboxes over SMTP."
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "n3rwus", email = "mnerwinski@outlook.com" }
 ]

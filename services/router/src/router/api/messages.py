@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Annotated, cast
 from uuid import UUID
@@ -10,6 +11,8 @@ from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field
 from router.application.messages import get_message, submit_message
 from router.domain.message import MessageStatus
 from router.ports.message_repository import MessageRepository
+
+_log = logging.getLogger(__name__)
 
 MESSAGE_MIN_LENGTH = 1
 MESSAGE_MAX_LENGTH = 5000
@@ -102,6 +105,7 @@ async def submit_message_endpoint(
         body=payload.message,
         repository=_repository(request),
     )
+    _log.info("message accepted", extra={"message_id": str(message.id)})
     response.headers["Location"] = f"{request.url.path.rstrip('/')}/{message.id}"
     return SubmitMessageResponse(id=message.id, status=message.status)
 

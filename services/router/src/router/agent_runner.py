@@ -103,10 +103,22 @@ async def _main_async() -> None:
         settings.llm.model,
         provider=OllamaProvider(base_url=settings.llm.base_url),
     )
-    agent = build_routing_agent(model, timeout_seconds=settings.llm.timeout_seconds)
+    agent = build_routing_agent(
+        model,
+        timeout_seconds=settings.llm.timeout_seconds,
+        model_name=settings.llm.model,
+    )
 
     stale = await repository.requeue_stale(now=_utcnow())
-    _log.info("requeued stale messages on startup", extra={"attempt": stale})
+    _log.info(
+        "agent started",
+        extra={
+            "model": settings.llm.model,
+            "poll_interval_seconds": settings.worker.poll_interval_seconds,
+            "max_attempts": settings.worker.max_attempts,
+            "requeued": stale,
+        },
+    )
 
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
@@ -124,6 +136,7 @@ async def _main_async() -> None:
             heartbeat=lambda: _touch(heartbeat_path),
         )
     finally:
+        _log.info("agent stopped")
         await notifier.aclose()
         await engine.dispose()
 

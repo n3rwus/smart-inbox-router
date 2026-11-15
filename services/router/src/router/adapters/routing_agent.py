@@ -1,3 +1,6 @@
+import logging
+import time
+
 import httpx
 from common.departments import Department
 from common.errors import LlmUnavailableError, UpstreamTimeoutError
@@ -14,7 +17,9 @@ from pydantic_ai.usage import UsageLimits
 
 from router.domain.departments import DEPARTMENT_DESCRIPTIONS
 from router.domain.prompt import build_user_prompt
-from router.ports.routing_agent import RoutingAgent, RoutingDeps
+from router.ports.routing_agent import FallbackReason, RoutingAgent, RoutingDeps, RunStats
+
+_log = logging.getLogger(__name__)
 
 DEFAULT_REQUEST_LIMIT = 3
 DEFAULT_TIMEOUT_SECONDS = 120.0
@@ -62,25 +67,47 @@ class _PydanticRoutingAgent:
         *,
         timeout_seconds: float,
         request_limit: int,
+        model_name: str,
     ) -> None:
         self._agent = agent
         self.timeout_seconds = timeout_seconds
         self._usage_limits = UsageLimits(request_limit=request_limit)
+        self._model_name = model_name
 
     @with_timeout
-    async def run(self, deps: RoutingDeps) -> None:
+    async def run(self, deps: RoutingDeps) -> RunStats:
+        started = time.monotonic()
+        fallback_reason: FallbackReason | None = None
+        usage = None
         try:
-            await self._agent.run(
+            result = await self._agent.run(
                 build_user_prompt(deps.body),
                 deps=deps,
                 usage_limits=self._usage_limits,
             )
+            usage = result.usage
         except UpstreamTimeoutError:
             raise
         except (ModelAPIError, httpx.RequestError) as exc:
             raise LlmUnavailableError(f"LLM request failed: {exc}") from exc
-        except (UsageLimitExceeded, UnexpectedModelBehavior):
-            return
+        except UsageLimitExceeded:
+            fallback_reason = "usage_limit"
+        except UnexpectedModelBehavior:
+            fallback_reason = "unexpected_model_behavior"
+
+        if fallback_reason is None and deps.sent_to is None:
+            fallback_reason = "no_tool_call"
+
+        duration_ms = int((time.monotonic() - started) * 1000)
+        return RunStats(
+            model=self._model_name,
+            duration_ms=duration_ms,
+            requests=getattr(usage, "requests", 0) or 0,
+            tool_calls=getattr(usage, "tool_calls", 0) or 0,
+            input_tokens=getattr(usage, "input_tokens", 0) or 0,
+            output_tokens=getattr(usage, "output_tokens", 0) or 0,
+            fallback_reason=fallback_reason,
+        )
 
 
 def build_routing_agent(
@@ -88,6 +115,7 @@ def build_routing_agent(
     *,
     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS,
     request_limit: int = DEFAULT_REQUEST_LIMIT,
+    model_name: str | None = None,
 ) -> RoutingAgent:
     agent = Agent[RoutingDeps, str](
         model=model,
@@ -101,6 +129,7 @@ def build_routing_agent(
         """Route the current message to the chosen department."""
         if ctx.deps.sent_to is not None:
             return f"message already routed to {ctx.deps.sent_to.value}"
+        _log.info("routing tool called", extra={"department": department.value})
         await ctx.deps.notifier.notify(
             message_id=ctx.deps.message_id,
             department=department,
@@ -110,6 +139,10 @@ def build_routing_agent(
         ctx.deps.sent_to = department
         return f"message routed to {department.value}"
 
+    resolved_name = model_name or getattr(model, "model_name", None) or str(model)
     return _PydanticRoutingAgent(
-        agent, timeout_seconds=timeout_seconds, request_limit=request_limit
+        agent,
+        timeout_seconds=timeout_seconds,
+        request_limit=request_limit,
+        model_name=resolved_name,
     )

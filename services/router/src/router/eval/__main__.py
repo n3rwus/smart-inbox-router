@@ -82,7 +82,7 @@ async def _run_case(agent: RoutingAgent, case: dict[str, Any]) -> CaseResult:
     fallback = False
     error: str | None = None
     try:
-        department, fallback = await route_message(
+        department, fallback, _stats = await route_message(
             message_id=uuid4(),
             sender_email="eval@example.com",
             body=case["message"],

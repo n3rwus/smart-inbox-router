@@ -16,9 +16,22 @@ from router.application.worker import process_next
 from router.config import RouterSettings
 from router.domain.message import Message, MessageStatus
 from router.ports.notifier import DeliveryRejectedError
-from router.ports.routing_agent import RoutingDeps
+from router.ports.routing_agent import RoutingDeps, RunStats
 
 from .fakes import FakeNotifier
+
+
+def _stats() -> RunStats:
+    return RunStats(
+        model="test",
+        duration_ms=1,
+        requests=1,
+        tool_calls=0,
+        input_tokens=0,
+        output_tokens=0,
+        fallback_reason=None,
+    )
+
 
 NOW = datetime(2026, 11, 14, 12, 0, tzinfo=UTC)
 MAX_ATTEMPTS = 3
@@ -55,12 +68,13 @@ class _StubAgent:
         self._error = error
         self.deps_seen: list[RoutingDeps] = []
 
-    async def run(self, deps: RoutingDeps) -> None:
+    async def run(self, deps: RoutingDeps) -> RunStats:
         self.deps_seen.append(deps)
         if self._error is not None:
             raise self._error
         if self._department is not None:
             deps.sent_to = self._department
+        return _stats()
 
 
 async def test_empty_queue_returns_false() -> None:
@@ -250,9 +264,10 @@ async def test_heartbeat_fires_while_process_next_blocks() -> None:
     release = asyncio.Event()
 
     class _BlockingAgent:
-        async def run(self, deps: RoutingDeps) -> None:
+        async def run(self, deps: RoutingDeps) -> RunStats:
             deps.sent_to = Department.IT
             await release.wait()
+            return _stats()
 
     settings = RouterSettings(_env_file=None)
     stop = asyncio.Event()
